@@ -1,0 +1,28 @@
+{
+  "development": {
+    "LP":{
+      "username": "sa",
+      "password": "dbsa",
+      "database": "Empresa",
+      "host": "canaslp.sytes.net",
+      "dialect": "mssql",
+      "port": "1433"
+    }
+  },
+  "test": {
+    "username": "sa",
+    "password": "dbsa",
+    "database": "Empresa",
+    "host": "192.168.2.173",
+    "dialect": "mssql",
+    "port": "49170"
+  },
+  "production": {
+    "username": "sa",
+    "password": "dbsa",
+    "database": "Empresa",
+    "host": "192.168.2.173",
+    "dialect": "mssql",
+    "port": "49170"
+  }
+}

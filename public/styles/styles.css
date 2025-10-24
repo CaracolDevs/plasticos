@@ -1,0 +1,285 @@
+header {
+    margin-bottom: 40px;
+}
+header div {
+    border-bottom: 4px solid orange;
+}
+header div img {
+    margin-top: 12px
+}
+
+
+
+.headerList {
+  list-style: none ;
+  
+}
+
+.headerList li{
+  display: inline-block ;
+  width: 200px;
+}
+
+.headerList li a{
+  text-decoration: none;
+  color: black;
+}
+
+.headerList li a:hover{
+  text-decoration: underline;
+  animation: 1s ease-in;
+}
+
+
+.first .custom-btn {
+  min-width: 200px
+}
+
+.second {
+
+
+}
+
+form {
+    @media (max-width: 1300px) {
+    width: 100%;
+    margin-bottom: 8px;
+      }
+}
+
+.basic-ul {
+    list-style: none;
+    padding-left: 0!important;   
+    margin-bottom: 10px;
+}
+
+.basic-ul {
+    a {
+        width: 180px;
+    }
+}
+
+.basic-ul {
+    span {
+        font-weight: bold;
+    }
+}
+
+.basic ul .tag {
+  min-width: 200px;
+}
+
+.basic-ul li a{
+    min-width: 100px;
+    display: inline-block;
+    text-decoration: none;
+    color: inherit;
+    font-weight: bold;
+}
+
+.basic-ul li a:hover{
+    transition: .3s ease-in;
+    color: #ff6b0b;
+}
+
+.basic-ul li {
+    padding-left: 10px;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid black;
+}
+
+.basic-input {
+    display: inline-block;
+    visibility: hidden;
+    max-width: 0px;
+}
+
+.basic-form { 
+    display: inline-block;
+    border-left: 4px solid black;
+    padding-left: 10px;
+}
+
+.basic-form input{ 
+    text-transform: uppercase;
+}
+
+.basic-form .pass{ 
+  text-transform: none!important;
+}
+
+
+.container {
+    
+}
+
+.container form {
+    width: 100%;
+    text-align: center;
+}
+
+.container form span{
+  display: inline-block;
+  min-width: 180px;
+}
+
+.container form input[type=submit]{
+  margin-top: 20px;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 16px!important;
+}
+
+.icon-caracol {
+    background-image: url('/images/icon-caracol.png');
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    margin-right: 4px;
+}
+
+.display-ul {
+    list-style: none;
+}
+
+.logo {
+    display: inline-block;
+    width: 300px;
+    height: 130px;
+    margin-bottom: 24px;
+
+}
+
+
+
+
+
+
+
+
+
+button {
+    margin: 20px;
+    text-align: center;
+  }
+  .custom-btn {
+    text-align: center;
+    max-width: 140px;
+    height: 40px;
+    color: #fff;
+    border-radius: 5px;
+    padding: 0px 10px!important;
+    font-family: 'Lato', sans-serif;
+    font-weight: 500;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    display: inline-block;
+     box-shadow:inset 2px 2px 2px 0px rgba(255,255,255,.5),
+     7px 7px 20px 0px rgba(0,0,0,.1),
+     4px 4px 5px 0px rgba(0,0,0,.1);
+    outline: none;
+  }
+
+  /* 7 */
+.btn-7 {
+    background: linear-gradient(0deg, rgba(255,151,0,1) 0%, rgba(251,75,2,1) 100%);
+      line-height: 42px;
+      padding: 0;
+      border: none;
+    }
+    .btn-7 span {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .btn-7:before,
+    .btn-7:after {
+      position: absolute;
+      content: "";
+      right: 0;
+      bottom: 0;
+      background: rgba(251,75,2,1);
+      box-shadow:
+       -7px -7px 20px 0px rgba(255,255,255,.9),
+       -4px -4px 5px 0px rgba(255,255,255,.9),
+       7px 7px 20px 0px rgba(0,0,0,.2),
+       4px 4px 5px 0px rgba(0,0,0,.3);
+      transition: all 0.3s ease;
+    }
+    .btn-7:before{
+       height: 0%;
+       width: 2px;
+    }
+    .btn-7:after {
+      width: 0%;
+      height: 2px;
+    }
+    .btn-7:hover{
+      color: rgba(251,75,2,1);
+      background: transparent;
+      border: 1px solid rgba(251,75,2,1);
+    }
+    .btn-7:hover:before {
+      height: 100%;
+    }
+    .btn-7:hover:after {
+      width: 100%;
+    }
+    .btn-7 span:before,
+    .btn-7 span:after {
+      position: absolute;
+      content: "";
+      left: 0;
+      top: 0;
+      background: rgba(251,75,2,1);
+      box-shadow:
+       -7px -7px 20px 0px rgba(255,255,255,.9),
+       -4px -4px 5px 0px rgba(255,255,255,.9),
+       7px 7px 20px 0px rgba(0,0,0,.2),
+       4px 4px 5px 0px rgba(0,0,0,.3);
+      transition: all 0.3s ease;
+    }
+    .btn-7 span:before {
+      width: 2px;
+      height: 0%;
+    }
+    .btn-7 span:after {
+      height: 2px;
+      width: 0%;
+    }
+    .btn-7 span:hover:before {
+      height: 100%;
+    }
+    .btn-7 span:hover:after {
+      width: 100%;
+    }
+
+    .btn-special {
+        display: inline-block;
+        padding: 0 10px;
+        height: 40px;
+        width: 128px;
+    }
+
+    .spc {
+        text-decoration: none;
+        margin-top: 10px;
+    }
+
+    .a-list {
+        text-decoration: none;
+        color: black;
+        font-weight: 600;
+    }
+
+    .a-list:hover {
+        color: red;
+        transition: .3s ease-in;
+    }
+    
