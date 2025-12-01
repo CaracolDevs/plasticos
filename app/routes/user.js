@@ -13,9 +13,8 @@ const router = express.Router()
  */
 router.get(
     `/`,
-    controller.getData
+    controller.displayUsers
 )
-
 /**
  * Ruta: /user GET
  */

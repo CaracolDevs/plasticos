@@ -29,10 +29,17 @@ Sequelize.DATE.prototype._stringify = function _stringify(date, options) {
 if (config.use_env_variable) {
   sequelizevalue = new Sequelize(process.env[config.use_env_variable], config);
 } else {
-  sequelizevalue = new Sequelize('Empresa', 'sa', 'dbsa', {
-    host: 'canaslp.sytes.net',
+  sequelizevalue = new Sequelize('Empresa', 'admin', 'pass', {
+    host: 'DESKTOP-FRG0AKO',
     dialect: 'mssql',
-    port: '1433'
+    port: '1433',
+    dialectOptions: {
+    options: {
+      encrypt: true, // Desactiva SSL si estás en local
+      trustServerCertificate: true // Acepta certificados locales
+    }
+  },
+  logging: false // Opcional: evita que muestre logs de SQL
   })
   /*
   sequelizeLO = new Sequelize(config.LO.database, config.LO.username, config.LO.password, config.LO);

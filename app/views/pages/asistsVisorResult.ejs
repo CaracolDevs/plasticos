@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=<device-width>, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="/styles/styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+<body>
+    <header>
+        <div>
+            <img class="logo" src="/images/logo.jpg" alt="Logo">
+        </div>
+        <ul class="headerList">
+            <li> <a href="/asist/visor"><p>Regresar</p></a></li>
+                <li> <a href="/asists/report"><p>Reporte</p></a></li>
+                <li> <a href="/asists/visor"><p>Visor de asistencias</p></a></li>
+            <li> <a href="/directory/logout"><p>Cerrar Sesion</p></a></li>
+           </ul>
+    </header>
+
+    <div class="container-xxl">
+    
+        <h2>Colaborador: <%= content[1][0] %></h2>
+
+        
+
+        <span>Asistencia total: <%= content[4] %></span>
+        <div id="bar01"></div>
+        <span id="title02">Asistidos: <%= content[2] %></span>
+        <div id="bar02"></div>
+        <span id="title03">Faltados: <%= content[4] %></span>
+        <div id="bar03"></div>
+        <br><br>
+
+        <span id="title04">Permisos o Incapacidades: <span/><br><br>
+
+        
+
+
+        
+
+
+    </div>
+    
+    <script>
+
+        // se crearan abrras dependiendo de los dias faltados y asistidos
+            let ids = '<%= content[0] %>'.split(",");
+            let names = '<%= content[1] %>'.split(",");
+            let asists = '<%= content[2] %>'.split(","); //checar como sacar varios arrays
+            let reasons = '<%= content[3] %>'.split(",");
+            let totalDays = '<%= content[4] %>'.split(",");
+
+            let bar01 = document.getElementById("bar01")
+
+            bar01.style.width = "100%"
+            bar01.style.backgroundColor = "red"
+            bar01.style.height = "30px"
+
+            let bar02 = document.getElementById("bar02")
+            let asistidos = asists.length
+            let asistidosValue = (asistidos * 100) / totalDays 
+            console.log(asistidosValue)
+
+            let title02 = document.getElementById("title02")
+
+            bar02.style.width = asistidosValue.toString().concat("%")
+            bar02.style.backgroundColor = "red"
+            bar02.style.height = "30px"
+
+            title02.textContent = `Asistidos: ${asistidos}`
+
+
+
+            let bar03 = document.getElementById("bar03")
+            let faltados = totalDays - asists.length
+            let faltadosValue = (100 * faltados )/ totalDays
+            console.log(asistidosValue)
+
+            let title03 = document.getElementById("title03")
+
+            bar03.style.width = faltadosValue.toString().concat("%")
+            bar03.style.backgroundColor = "red"
+            bar03.style.height = "30px"
+
+            title03.textContent = `faltados: ${faltados}`
+
+
+            let count = 0
+
+            for(let row of reasons) {
+                
+                if(row != '') {
+                    count++
+                }
+            }
+
+            let title04 = document.getElementById("title04")
+
+            title04.textContent = `Permisos o Incapacidades: ${count}` 
+            
+
+            console.log("jotoolon", asistidos)
+
+            console.log("joto")
+        console.log(ids, names, asists, reasons, totalDays[0])
+    
+    </script>
+
+</body>
+
+
+</html>

@@ -283,3 +283,75 @@ button {
         transition: .3s ease-in;
     }
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    .titleCat01 {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .titleCat02 {
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .formCat01 {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .formCat01 span {
+      width: 24%;
+    }
+
+    .formCat01 input, select {
+      width: 24%;
+      
+      margin-right: 1%!important
+    }
+
+    .formCatMain input[type='submit'] {
+      margin-bottom: 30px;
+    }

@@ -13,33 +13,29 @@
             <img class="logo" src="/images/logo.jpg" alt="Logo">
         </div>
         <ul class="headerList">
-            <li> <a href="javascript:history.back()"><p>Regresar</p></a></li>
-
-            <li> <a href="/asists"><p>Asistencias</p></a></li>
-            <li> <a href="/reportes"><p>Reportes</p></a></li>
-            <li> <a href="/paros"><p>Paros</p></a></li>
-            <li> <a href="/indicadores"><p>Indicadores</p></a></li>
-
+            <li> <a href="/paros/visor"><p>Regresar</p></a></li>
             <li> <a href="/directory/logout"><p>Cerrar Sesion</p></a></li>
            </ul>
     </header>
+
     <div class="container-xxl">
-    
-    
-    <ul class="basic-ul">
-        <% for(var i = 0; i < content[0].length; i++) { %>
-            <li >
-                <a target="_self" class="title" href="/directory/<%= content[0][i] %>" ><span><%= content[0][i] %> </span></a>
-                
-                
+        <h3>Paros en "<%= content[1][0] %>"</h3>
+            <br>
+            <% for(var i = 0; i < content[0].length; i++) { %>
+             <span>
+                | Colaborador: <b><%= content[0][i] %></b>
+                | Hora Inicio: <b><%= content[2][i] %></b>
+             | Hora Final: <b><%= content[3][i] %></b>
+             | Duración: <b><%= content[4][i] %> Minutos</b>
+             |<br>
+             <span/>
 
-                
-            </li>
-            
-          <% } %>
+            <% } %>
+       
 
-          
-    </ul>
     </div>
+    
+    
+
 </body>
 </html>

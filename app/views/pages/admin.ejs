@@ -15,16 +15,34 @@
 
        <ul class="headerList">
         <li> <a href="javascript:history.back()"><p>Regresar</p></a></li>
+        
+        <li> <a href="/user"><p>Usuarios</p></a></li>
+        <li> <a href="/asists"><p>Asistencias</p></a></li>
+        <li> <a href="/reportes"><p>Reportes</p></a></li>
+        <li> <a href="/paros"><p>Paros</p></a></li>
+        <li> <a href="/indicadores"><p>Indicadores</p></a></li>
+
         <li> <a href="/directory/logout"><p>Cerrar Sesion</p></a></li>
-        <li><a href="/directory/users"><p>Modificar usuarios</p></a></li>
+        
+        <!--<li><a href="/directory/users"><p>Modificar usuarios</p></a></li>-->
        </ul>
     </header>
 
     <div class="container-xxl">
-    
+        <h1>Selecciona el reporte que deseas!</h1><br>
+    <form class="basic-form first" action="/report/daily" enctype="x-www-form-urlencoded" method="POST" onSubmit="return confirm('Este valor se borrara DIFNITIVAMENTE, esta seguro de continuar?');">
+        <input class="custom-btn btn-7" type="submit" value="Diario">
+        <input class="basic-input" type="text" name="name" id="name" value="">       
+    </form>
+
+    <form class="basic-form first" action="/report/monthly" enctype="x-www-form-urlencoded" method="POST" onSubmit="return confirm('Este valor se borrara DIFNITIVAMENTE, esta seguro de continuar?');">
+        <input class="custom-btn btn-7" type="submit" value="Mensualapo">
+        <input class="basic-input" type="text" name="name" id="name" value="">       
+    </form>
 
     
-    <ul class="basic-ul">
+    <!--
+        <ul class="basic-ul">
         <% for(var i = 0; i < content[0].length; i++) { %>
             <li >
                 <a target="_self" class="title" href="/directory/<%= content[0][i] %>" ><span><%= content[0][i] %> </span></a>
@@ -49,16 +67,17 @@
           <% } %>
 
           
-    </ul>
+    </ul>-->
     </div>
     
+    <!--
     <div class="container">
         <form action="/directory/create" method="POST">
             <p>Ingrese carpeta nueva</p>
             <input minlength="4" type="text" name="name" id="name">
             <input type="submit" value="Crear">
         </form>
-    </div>
+    </div>-->
 
 </body>
 </html>

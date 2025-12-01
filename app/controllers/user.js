@@ -1,6 +1,11 @@
 const mongoose = require('mongoose')
 const model = require('../models/user')
 
+
+const { Sequelize, Op, where}    = require('sequelize');
+const value = require('../models/value').usuarios;
+
+
 const options = {
     page: 1,
     limit: 3
@@ -9,6 +14,58 @@ const options = {
 const parseId = (id) => {
     return mongoose.Types.ObjectId(id)
 }
+
+
+/// MUESTRA LOS USUARIOS Y PERMITE MODIFICARLOS
+exports.displayUsers = async (req, res) => {
+
+    let departamentos = await deps('/')
+    console.log("tilin")
+    console.log(departamentos)
+
+    let result = await value.findAll({
+        where: {
+            [Op.not]: [{
+                Super: 1
+            }]
+        }
+    })
+
+    console.log("result")
+    console.log(result)
+
+    let content = [],
+    name = [],
+    id = [],
+    depa = []
+
+    for(values of result) {
+        id.push(values.dataValues['UserId'])
+        name.push(values.dataValues['User'])
+        depa.push(values.dataValues['Departament'])
+    }
+
+    content = [id,name,depa]
+    console.log("USERS", result, content)
+
+    res.render('adminUsers', {content, departamentos})
+}
+
+exports.index =  async (req, res) => {
+    
+
+    try {
+        
+       
+        res.render('usuarios')
+        
+    } catch (error) {
+        res.send({ message: 'not Done!' })
+        throw error
+    }
+}
+
+
 /**
  * Obtener DATA de USUARIOS
  */

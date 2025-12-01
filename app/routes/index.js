@@ -14,6 +14,9 @@ const routes = [
         path: 'user'
     },
     {
+        path: 'asists'
+    },
+    {
         path: 'items'
     },
     {
@@ -24,6 +27,12 @@ const routes = [
     },
     {
         path: 'directory'
+    },
+    {
+        path: 'paros'
+    },
+    {
+        path: 'reportes'
     }
 ]
 

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=<device-width>, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="/styles/styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+<body>
+    <header>
+        <div>
+            <img class="logo" src="/images/logo.jpg" alt="Logo">
+        </div>
+        <ul class="headerList">
+            <li> <a href="/directory/reportes"><p>Regresar</p></a></li>
+                <li> <a href="/reportes/maquina1y2"><p>Maquinas 1 y 2</p></a></li>
+                <li> <a href="/reportes/maquina3"><p>Maquina 3</p></a></li>
+                <li> <a href="/reportes/rochelau"><p>Rochelau</p></a></li>
+                <li> <a href="/reportes/efecta"><p>Efecta</p></a></li>
+                <li> <a href="/reportes/tunel"><p>Tunel de Calor</p></a></li>
+            <li> <a href="/directory/logout"><p>Cerrar Sesion</p></a></li>
+           </ul>
+    </header>
+
+    <div class="container-xxl">
+        <form class="basic-form first formCatMain" action="/reportes/maquina3/sendReport" enctype="x-www-form-urlencoded" method="POST" onSubmit="return confirm('Este valor se borrara DIFNITIVAMENTE, esta seguro de continuar?');">
+            <span>Fecha:</span><br>
+            
+            <input class="custom-btn btn-7" required type="date" name="date" id="date">
+<br><br>
+            <span>Colaborador</span><br>
+                    <select class="custom-btn btn-7" required name="colaborador" id="colaborador">
+                        <% for(var i = 0; i < content[0].length; i++) { %>
+                        <option value="<%= content[0][i] %>"><%= content[1][i] %></option>
+                    <% } %>
+                    </select><br><br>
+
+            <span>Turno:</span><br>
+                <select class="custom-btn btn-7" required name="turno" id="turno">
+                            
+                            <option value="01">Matutino</option>
+                            <option value="02">Vespertino</option>
+                            
+                </select><br><br>
+
+                <span class="titleCat01">Insumos</span><br><br>
+
+                <span class="titleCat02">Polietileno AD </span><br>
+                <div class="formCat01">
+                <span>Lote:</span>
+                <input type="text" required  maxlength="10" name="I01_lote" id="I01_lote">
+                <span>Valor inicial:</span>
+                <input type="text" required  maxlength="10" name="I01_valorI" id="I01_valorI">
+                <span>Valor Final:</span>
+                <input type="text" required  maxlength="10" name="I01_valorF" id="I01_valorF">
+                <span>Valor Contenedor Inicial:</span>
+                <input type="text"  maxlength="10" name="I01_valorContenedorI" id="I01_valorContenedorI">
+                <span>Valor Contenedor Final:</span>
+                <input type="text"  maxlength="10" name="I01_valorContenedorF" id="I01_valorContenedorF">
+                <span>Solicitud:</span>
+                <input type="text"  maxlength="10" name="I01_solicitud" id="I01_solicitud">
+                <span>Folio de Solicitud:</span>
+                <input type="text"  maxlength="10" name="I01_solicitud" id="I01_solicitudFolio">
+                <span>Folio de Salida de Almacen:</span>
+                <input type="text"  maxlength="10" name="I01_solicitud" id="I01_solicitudFolioSalida">
+                <span>Merma:</span>
+                <input type="text"  maxlength="10" name="I01_merma" id="I01_merma">
+                <span>Materia Prima Utilizada</span>
+                <input required type="text"  maxlength="10" name="I01_MPutilizada" id="I01_MPutilizada">
+                </div>
+                
+                <span class="titleCat02">Bolsa</span><br>
+
+                <div class="formCat01">
+                <span>Lote:</span>
+                <input required type="text"  maxlength="10" name="I02_lote" id="I02_lote">
+                <span>Valor Inicial:</span>
+                <input required type="text"  maxlength="10" name="I02_valorI" id="I02_valorI">
+                <span>Valor Final:</span>
+                <input required type="text"  maxlength="10" name="I02_valorF" id="I02_valorF">
+                <span>Solicitud:</span>
+                <input type="text"  maxlength="10" name="I02_solicitud" id="I02_solicitud">
+                <span>Folio de Solicitud:</span>
+                <input type="text"  maxlength="10" name="I02_solicitud" id="I02_solicitudFolio">
+                <span>Folio de Salida de Almacen:</span>
+                <input type="text"  maxlength="10" name="I02_solicitud" id="I02_solicitudFolioSalida">
+                <span>Merma</span>
+                <input type="text"  maxlength="10" name="I02_merma" id="I02_merma">
+                <span>Materia Prima Utilizada</span>
+                <input required type="text"  maxlength="10" name="I02_MPutilizada" id="I02_MPutilizada">
+                </div>
+
+
+
+
+
+
+
+                <span class="titleCat02">Produccion Maquina 3</span><br><br>
+
+                <div class="formCat01">
+                <span>Presentacion</span>
+                <select required name="M03_presentacion" id="M03_presentacion">
+                    <option value="L-J">Litro "La Jolla"</option>
+                </select>
+
+                <span>Lote Produccion</span>
+                <input required type="text"  maxlength="10" name="M03_lote" id="M03_lote">
+
+                <span>Produccion Pzs</span>
+                <input required type="text"  maxlength="10" name="M03_pzs" id="M03_pzs">
+
+                <span>Folio Entrada</span>
+                <input required type="text"  maxlength="10" name="M03_folioEntrada" id="M03_folioEntrada">
+                
+                <span>Horometro Inicial</span>
+                <input required type="text"  maxlength="10" name="M03_HI" id="M03_HI">
+
+                <span>Horometro Final</span>
+                <input required type="text"  maxlength="10" name="M03_HF" id="M03_HF">
+                </div>
+              
+                
+                
+
+
+            <input type="submit" value="Enviar">
+        </form>
+
+    </div>
+    
+
+</body>
+</html>

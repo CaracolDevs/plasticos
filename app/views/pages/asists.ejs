@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=<device-width>, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="/styles/styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+<body>
+    <header>
+        <div>
+            <img class="logo" src="/images/logo.jpg" alt="Logo">
+        </div>
+        <ul class="headerList">
+            <li> <a href="/directory"><p>Regresar</p></a></li>
+                <li> <a href="/asists/report"><p>Reporte</p></a></li>
+                <li> <a href="/asists/visor"><p>Visor de asistencias</p></a></li>
+            <li> <a href="/directory/logout"><p>Cerrar Sesion</p></a></li>
+           </ul>
+    </header>
+
+    <div class="container-xxl">
+    
+
+    
+    <ul class="basic-ul">
+        <% for(var i = 0; i < content[0].length; i++) { %>
+            
+            <li><span class="tag"><%= content[0][i] %> : <%= content[1][i] %> - <%= content[2][i] %> - <%= content[3][i] %> - <%= content[4][i] %> </span>
+            <form class="basic-form first" action="/asists/colabor/delete" enctype="x-www-form-urlencoded" method="POST" onSubmit="return confirm('Este valor se borrara DIFNITIVAMENTE, esta seguro de continuar?');">
+                    <input class="custom-btn btn-7" type="submit" value="Borrar">
+                    <input class="basic-input" type="text" name="name" id="name" value="<%= content[0][i] %>">       
+                </form></li>
+            
+            <!--
+            <li >
+                <span class="tag"><%= content[0][i] %> : <%= content[1][i] %> - <%= content[2][i] %> </span>
+                <form class="basic-form first" action="/directory/users/delete?id=<%= content[0][i] %>" enctype="x-www-form-urlencoded" method="POST" onSubmit="return confirm('Este valor se borrara DIFNITIVAMENTE, esta seguro de continuar?');">
+                    <input class="custom-btn btn-7" type="submit" value="Borrar">
+                    <input class="basic-input" type="text" name="name" id="name" value="<%= content[0][i] %>">       
+                </form>
+               
+                
+                
+
+                
+            </li>
+            -->
+            
+          <% } %>
+
+          
+    </ul>
+    </div>
+
+    <div class="container">
+        <form action="/asists/colabor/create" method="POST">
+            <p>Crear Colaborador</p>
+    
+            <span>Nombre: &nbsp&nbsp&nbsp&nbsp&nbsp</span>
+            <input required minlength="4" type="text" name="name" id="name"><br>
+            <span>Puesto:</span>
+            <input required minlength="4" type="text" name="role" id="role"><br>
+            <span>No. Empleado</span>
+            <input required minlength="4" type="text" name="noE" id="noE"><br>
+            <span>No. Imss</span>
+            <input required minlength="4" type="text" name="noI" id="noI"><br>
+
+            <br>
+            <input required type="submit" value="Crear">
+        </form>
+    </div>
+    
+    
+
+</body>
+</html>

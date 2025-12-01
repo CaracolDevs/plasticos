@@ -13,33 +13,21 @@
             <img class="logo" src="/images/logo.jpg" alt="Logo">
         </div>
         <ul class="headerList">
-            <li> <a href="javascript:history.back()"><p>Regresar</p></a></li>
-
-            <li> <a href="/asists"><p>Asistencias</p></a></li>
-            <li> <a href="/reportes"><p>Reportes</p></a></li>
-            <li> <a href="/paros"><p>Paros</p></a></li>
-            <li> <a href="/indicadores"><p>Indicadores</p></a></li>
-
+            <li> <a href="/directory"><p>Regresar</p></a></li>
+                <li> <a href="/reportes/maquina1y2"><p>Maquinas 1 y 2</p></a></li>
+                <li> <a href="/reportes/maquina3"><p>Maquina 3</p></a></li>
+                <li> <a href="/reportes/rochelau"><p>Rochelau</p></a></li>
+                <li> <a href="/reportes/efecta"><p>Efecta</p></a></li>
+                <li> <a href="/reportes/tunel"><p>Tunel de Calor</p></a></li>
             <li> <a href="/directory/logout"><p>Cerrar Sesion</p></a></li>
            </ul>
     </header>
+
     <div class="container-xxl">
     
-    
-    <ul class="basic-ul">
-        <% for(var i = 0; i < content[0].length; i++) { %>
-            <li >
-                <a target="_self" class="title" href="/directory/<%= content[0][i] %>" ><span><%= content[0][i] %> </span></a>
-                
-                
 
-                
-            </li>
-            
-          <% } %>
-
-          
-    </ul>
     </div>
+    
+
 </body>
 </html>
