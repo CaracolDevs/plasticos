@@ -7,7 +7,7 @@ const value = require('../models/value').colaboradores;
 const maquinas = require('../models/value').maquinas;
 const paros = require('../models/value').paros;
 const insumos = require('../models/value').insumos;
-const produccion = require('../models/value').produccion;
+const producciones = require('../models/value').producciones;
 
 
 
@@ -83,12 +83,8 @@ exports.reportesMT = async (req, res) => {
 // guardar reportes
 
 
-let guardarInsumo = async (req, res) => {
-
-}
-
-
-exports.reportesM1y2Send = async (req, res) => {
+let guardarInsumo = async (req, insumo, contenedor, name, idMaquina, nameMaquina) => {
+  //insumo 01
     console.log(req.body)
 
     let result = await value.findAll({
@@ -99,7 +95,7 @@ exports.reportesM1y2Send = async (req, res) => {
 
 
     // filtrar la solicutd por si viene en 0
-    let solicitud01 = req.body.I01_solicitud
+    let solicitud01 = insumo.solicitud
     let solicitud01Value
    
     
@@ -107,54 +103,146 @@ exports.reportesM1y2Send = async (req, res) => {
     if(solicitud01[0] == '') {
         solicitud01Value = [false,0,0,0]
     } else {
-        solicitud01Value = [true,req.body.I01_solicitud[0],
-        req.body.I01_solicitud[1],
-        req.body.I01_solicitud[2]
+        solicitud01Value = [true,insumo.solicitud[0],
+        insumo.solicitud[1],
+        insumo.solicitud[2]
         ]
+    }
+
+    //filtrar contendor 
+    let contenedorI, contenedorF
+
+    if(contenedor == true) {
+        contenedorI = insumo.valorContenedorI
+        contenedorF = insumo.valorContenedorF
+    } else {
+        contenedorI = '0'
+        contenedorF = '0'
+        
     }
 
 
     //calcular ivnentairos
 
-    let inventarioInicial = Number(req.body.I01_valorI) + Number(req.body.I01_valorContenedorI) + Number(solicitud01Value[1])
-    let inventarioFinal = Number(req.body.I01_valorF) + Number(req.body.I01_valorContenedorF)
-    let insumoUtilizado = inventarioInicial - inventarioFinal + Number(req.body.I01_merma)
-    let insumoValidado = Number(req.body.I01_MPutilizada) + Number(req.body.I01_merma)
+    let inventarioInicial = Number(insumo.valorI) + Number(contenedorI) + Number(solicitud01Value[1])
+    let inventarioFinal = Number(insumo.valorF) + Number(contenedorF)
+    let insumoUtilizado = inventarioInicial - inventarioFinal + Number(insumo.merma)
+    let insumoValidado = Number(insumo.MPutilizada) + Number(insumo.merma)
 
 
    
    
-    const insumo = await insumos.create
+    const insumoCreate = await insumos.create
     ({
-        MaquinaId: '01',
-        Maquina: 'Maquina 1 y 2',
+        MaquinaId: idMaquina,
+        Maquina: nameMaquina,
         ColaborId: req.body.colaborador,
         Colabor: result[0].dataValues['Name'],
         Date: date,
         Turno: req.body.turno,
-        Insumo: 'Polietileno AD',
-        LoteInsumo: req.body.I01_lote,
-        InsumoInicial: Number(req.body.I01_valorI),
-        InsumoFinal: Number(req.body.I01_valorF),
+        Insumo: name,
+        LoteInsumo: insumo.lote,
+        InsumoInicial: Number(insumo.valorI),
+        InsumoFinal: Number(insumo.valorF),
         Contenedor: true,
-        ContenedorInicial: Number(req.body.I01_valorContenedorI),
-        ContenedorFinal: Number(req.body.I01_valorContenedorF),
+        ContenedorInicial: Number(contenedorI),
+        ContenedorFinal: Number(contenedorF),
         SolicitudInsumo: solicitud01Value[0],
         SolicitudInsumoQty: Number(solicitud01Value[1]),
-        SolicitudInsumoFolio: Number(solicitud01Value[2]),
-        SolicitudInsumoFolioSalida: Number(solicitud01Value[3]),
+        SolicitudInsumoFolio: solicitud01Value[2],
+        SolicitudInsumoFolioSalida: solicitud01Value[3],
         InventarioInicial: inventarioInicial,
         InventarioFinal: inventarioFinal,
-        InsumoMermado: Number(req.body.I01_merma),
+        InsumoMermado: Number(insumo.merma),
         InsumoUtilizado: insumoUtilizado,
         InsumoValidado: insumoValidado
 
 
 
     });
+}
 
-    console.log("ojitopapirrin")
-     
+
+let guardarProduccion = async (req, produccion, idMaquina, maquina) => {
+    let result = await value.findAll({
+        where: {ColaborId: req.body.colaborador }
+    })
+
+    let date = new Date(req.body.date)
+
+  const produccionCreate = await producciones.create
+    ({
+        MaquinaId: Number(idMaquina),
+        Maquina: maquina,
+        ColaborId: Number(req.body.colaborador),
+        Colabor: result[0].dataValues['Name'],
+        Date: date,
+        Turno: req.body.turno,
+        Presentacion: produccion.presentacion,
+        ProduccionPzs: Number(produccion.pzs),
+        ProduccionContenedores: Number(produccion.bolsas),
+        LoteProduccion: produccion.lote,
+        FolioEntrada: produccion.folioEntrada,
+        HorometroInicial: Number(produccion.HI),
+        HorometroFinal: Number(produccion.HF)
+
+
+
+    });
+}
+
+exports.reportesM1y2Send = async (req, res) => {
+
+
+   guardarInsumo(req, req.body.I01, true, 'Polietileno AD', '01', 'Maquina 1 y 2')
+   guardarInsumo(req, req.body.I02, false, 'Bolsa', '01', 'Maquina 1 y 2')
+   guardarProduccion(req, req.body.M01,'01', 'Maquina 1')
+   guardarProduccion(req, req.body.M02,'02', 'Maquina 2')
 
 
 }
+
+
+exports.reportesM3Send = async (req, res) => {
+
+
+   guardarInsumo(req, req.body.I01, true, 'Polietileno AD', '03', 'Maquina 3')
+   guardarInsumo(req, req.body.I02, false, 'Bolsa', '03', 'Maquina 3')
+   guardarProduccion(req, req.body.M03,'03', 'Maquina 3')
+
+
+}
+
+exports.reportesMRSend = async (req, res) => {
+
+
+   guardarInsumo(req, req.body.I01, true, 'Polietileno AD', '04', 'Maquina Rochelau')
+   guardarInsumo(req, req.body.I02, false, 'Bolsa', '04', 'Maquina Rochelau')
+   guardarInsumo(req, req.body.I03, false, 'Pigmento Blanco', '04', 'Maquina Rochelau')
+   guardarProduccion(req, req.body.MR,'04', 'Maquina Rochelau')
+
+
+}
+
+exports.reportesMESend = async (req, res) => {
+
+
+   guardarInsumo(req, req.body.I01, true, 'Polietileno BD', '05', 'Maquina Efecta')
+   guardarInsumo(req, req.body.I02, false, 'Caja', '05', 'Maquina Efecta')
+   guardarInsumo(req, req.body.I03, false, 'Bolsa', '05', 'Maquina Efecta')
+   guardarProduccion(req, req.body.ME,'05', 'Maquina Efecta')
+
+
+}
+
+exports.reportesMTSend = async (req, res) => {
+
+
+   guardarInsumo(req, req.body.I01, true, 'Etiqueta', '06', 'Maquina Tunel de Calor')
+   guardarInsumo(req, req.body.I02, false, 'Bolsa', '06', 'Maquina Tunel de Calor')
+   guardarProduccion(req, req.body.MT,'06', 'Maquina Tunel de Calor')
+
+
+}
+
+

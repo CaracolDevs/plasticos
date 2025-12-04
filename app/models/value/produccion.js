@@ -62,7 +62,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         type: DataTypes.DECIMAL(6,0)
     },
-    ProduccionContedores: {
+    ProduccionContenedores: {
         allowNull: false,
         type: DataTypes.DECIMAL(6,0)
     },
@@ -88,8 +88,8 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     timestamps: false,
-    tableName: 'produccion',
-    modelName: 'produccion', //must be 'rawTable' but DB was created time ago and required to be named like this
+    tableName: 'producciones',
+    modelName: 'producciones', //must be 'rawTable' but DB was created time ago and required to be named like this
     freezeTableName: true //xportFacturasGlobales
   });
   return rawTable;

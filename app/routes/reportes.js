@@ -52,8 +52,6 @@ router.post(
     controller.reportesM1y2Send
 )
 
-/*
-
 router.post(
     `/maquina3/sendReport`,
     controller.reportesM3Send
@@ -74,7 +72,7 @@ router.post(
     controller.reportesMTSend
 )
 
-*/
+
 
 
 module.exports = router
