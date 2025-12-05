@@ -72,6 +72,26 @@ router.post(
     controller.reportesMTSend
 )
 
+router.get(
+    `/reporteDiario`,
+    controller.reporteDiario
+)
+
+router.get(
+    `/reporteMensual`,
+    controller.reporteMensual
+)
+
+router.post(
+    `/reporteDiario/send`,
+    controller.reporteDiarioSend
+)
+
+router.post(
+    `/reporteMensual/send`,
+    controller.reporteMensualSend
+)
+
 
 
 

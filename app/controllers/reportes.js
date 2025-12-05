@@ -85,7 +85,12 @@ exports.reportesMT = async (req, res) => {
 
 let guardarInsumo = async (req, insumo, contenedor, name, idMaquina, nameMaquina) => {
   //insumo 01
-    console.log(req.body)
+    //console.log(req.body)
+
+
+    console.log("MARCA:" , insumo.marca)
+
+   
 
     let result = await value.findAll({
         where: {ColaborId: req.body.colaborador }
@@ -93,6 +98,12 @@ let guardarInsumo = async (req, insumo, contenedor, name, idMaquina, nameMaquina
 
     let date = new Date(req.body.date)
 
+
+     // filtrar marca
+
+    if(insumo.marca == undefined) {
+        insumo.marca = 'Generic'
+    }
 
     // filtrar la solicutd por si viene en 0
     let solicitud01 = insumo.solicitud
@@ -155,7 +166,8 @@ let guardarInsumo = async (req, insumo, contenedor, name, idMaquina, nameMaquina
         InventarioFinal: inventarioFinal,
         InsumoMermado: Number(insumo.merma),
         InsumoUtilizado: insumoUtilizado,
-        InsumoValidado: insumoValidado
+        InsumoValidado: insumoValidado,
+        InsumoMarca: insumo.marca
 
 
 
@@ -198,6 +210,7 @@ exports.reportesM1y2Send = async (req, res) => {
    guardarInsumo(req, req.body.I02, false, 'Bolsa', '01', 'Maquina 1 y 2')
    guardarProduccion(req, req.body.M01,'01', 'Maquina 1')
    guardarProduccion(req, req.body.M02,'02', 'Maquina 2')
+   res.redirect(req.get('referer'));
 
 
 }
@@ -209,6 +222,7 @@ exports.reportesM3Send = async (req, res) => {
    guardarInsumo(req, req.body.I01, true, 'Polietileno AD', '03', 'Maquina 3')
    guardarInsumo(req, req.body.I02, false, 'Bolsa', '03', 'Maquina 3')
    guardarProduccion(req, req.body.M03,'03', 'Maquina 3')
+   res.redirect(req.get('referer'));
 
 
 }
@@ -220,6 +234,7 @@ exports.reportesMRSend = async (req, res) => {
    guardarInsumo(req, req.body.I02, false, 'Bolsa', '04', 'Maquina Rochelau')
    guardarInsumo(req, req.body.I03, false, 'Pigmento Blanco', '04', 'Maquina Rochelau')
    guardarProduccion(req, req.body.MR,'04', 'Maquina Rochelau')
+   res.redirect(req.get('referer'));
 
 
 }
@@ -231,6 +246,7 @@ exports.reportesMESend = async (req, res) => {
    guardarInsumo(req, req.body.I02, false, 'Caja', '05', 'Maquina Efecta')
    guardarInsumo(req, req.body.I03, false, 'Bolsa', '05', 'Maquina Efecta')
    guardarProduccion(req, req.body.ME,'05', 'Maquina Efecta')
+   res.redirect(req.get('referer'));
 
 
 }
@@ -246,3 +262,33 @@ exports.reportesMTSend = async (req, res) => {
 }
 
 
+
+
+exports.reportesMTSend = async (req, res) => {
+
+
+   guardarInsumo(req, req.body.I01, true, 'Etiqueta', '06', 'Maquina Tunel de Calor')
+   guardarInsumo(req, req.body.I02, false, 'Bolsa', '06', 'Maquina Tunel de Calor')
+   guardarProduccion(req, req.body.MT,'06', 'Maquina Tunel de Calor')
+   res.redirect(req.get('referer'));
+
+
+}
+
+
+exports.reporteDiario = async (req, res) => {
+    res.render('reporteDiario')
+}
+
+exports.reporteMensual = async (req, res) => {
+    res.render('reporteMensual')
+}
+
+
+exports.reporteDiarioSend = async (req, res) => {
+    res.render('reporteDiario', {content})
+}
+
+exports.reporteMensualSend = async (req, res) => {
+    res.render('reporteMensual', {content})
+}

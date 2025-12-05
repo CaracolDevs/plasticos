@@ -117,6 +117,10 @@ module.exports = (sequelize, DataTypes) => {
     InsumoValidado: {
         allowNull: false,
         type: DataTypes.DECIMAL(7,0),
+    },
+    InsumoMarca: {
+        allowNull: false,
+        type: DataTypes.STRING,
     }
 
 

@@ -13,12 +13,13 @@
             <img class="logo" src="/images/logo.jpg" alt="Logo">
         </div>
         <ul class="headerList">
-            <li> <a href="/directory"><p>Regresar</p></a></li>
+            <li> <a href="/reportes"><p>Regresar</p></a></li>
                 <li> <a href="/reportes/maquina1y2"><p>Maquinas 1 y 2</p></a></li>
                 <li> <a href="/reportes/maquina3"><p>Maquina 3</p></a></li>
                 <li> <a href="/reportes/rochelau"><p>Rochelau</p></a></li>
                 <li> <a href="/reportes/efecta"><p>Efecta</p></a></li>
                 <li> <a href="/reportes/tunel"><p>Tunel de Calor</p></a></li>
+                
                 <li> <a href="/reportes/reporteDiario">Reporte Diario</a></li>
                 <li> <a href="/reportes/reporteMensual"> Reporte Mensual</a></li>
             <li> <a href="/directory/logout"><p>Cerrar Sesion</p></a></li>
@@ -26,7 +27,19 @@
     </header>
 
     <div class="container-xxl">
-    
+        <form class="basic-form first formCatMain" action="/reportes/reporteMensual/send" enctype="x-www-form-urlencoded" method="POST" onSubmit="return confirm('Este valor se borrara DIFNITIVAMENTE, esta seguro de continuar?');">
+            <span>Fecha:</span><br>
+            
+            <input class="custom-btn btn-7" required type="date" name="date"  id="date">
+            <br><br>
+
+
+                
+                
+
+
+            <input type="submit" value="Enviar">
+        </form>
 
     </div>
     
