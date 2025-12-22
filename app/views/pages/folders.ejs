@@ -17,7 +17,7 @@
     <ul class="display-ul">
         <% for(var i = 0; i < content.length; i++) { %>
             <li><span class="icon-caracol"></span><a class="a-list" href="/<%= result %>/<%= content[i] %>"><%= content[i] %></a>
-                <form class="basic-form first" action="/directory/delete" enctype="x-www-form-urlencoded" method="POST" onSubmit="return confirm('Este valor se borrara DIFNITIVAMENTE, esta seguro de continuar?');">
+                <form class="basic-form first" action="/directory/delete" enctype="x-www-form-urlencoded" method="POST" onSubmit="return confirm('Se agregara este valor, desea continuar?');">
                     <input class="custom-btn btn-7" type="submit" value="Borrar">
                     <input class="basic-input" type="text" name="name" id="name" value="/<%= result %>/<%= content[i] %>">       
                 </form>

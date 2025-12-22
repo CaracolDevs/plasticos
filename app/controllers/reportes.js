@@ -249,6 +249,7 @@ exports.reportesMESend = async (req, res) => {
    guardarInsumo(req, req.body.I01, true, 'Polietileno BD', '05', 'Maquina Efecta')
    guardarInsumo(req, req.body.I02, false, 'Caja', '05', 'Maquina Efecta')
    guardarInsumo(req, req.body.I03, false, 'Bolsa', '05', 'Maquina Efecta')
+   guardarInsumo(req, req.body.I03, false, 'Pigmento', '05', 'Maquina Efecta')
    guardarProduccion(req, req.body.ME,'05', 'Maquina Efecta')
    res.redirect(req.get('referer'));
 
@@ -607,19 +608,19 @@ exports.reporteDiarioSend = async (req, res) => {
           console.log(req.body)
        
          let pt01 = [(turno01[0] + turno01[1] + turno01[2] + turno01[3]) * 54,
-          Number(req.body.PT01_hrs), Number(req.body.PT01_cbs), 
+          Number(req.body.PT01_cbs), Number(req.body.PT01_hrs), 
           ((turno01[0] + turno01[1] + turno01[2] + turno01[3]) * 54)/(Number(req.body.PT01_hrs) * Number(req.body.PT01_cbs))]
 
           let pit01 = [(turno01[4] + turno01[5] + turno01[6] + turno01[7]) * 54,
-            Number(req.body.PIT01_hrs),Number(req.body.PIT01_cbs),
+            Number(req.body.PIT01_cbs),Number(req.body.PIT01_hrs),
         ((turno01[4] + turno01[5] + turno01[6] + turno01[7]) * 54)/(Number(req.body.PIT01_hrs) * Number(req.body.PIT01_cbs))]
 
             let pt02 = [(turno02[0] + turno02[1] + turno02[2] + turno02[3]) * 54,
-            Number(req.body.PT02_hrs), Number(req.body.PT02_cbs),
+            Number(req.body.PT02_cbs), Number(req.body.PT02_hrs),
         ((turno02[0] + turno02[1] + turno02[2] + turno02[3]) * 54)/(Number(req.body.PT02_hrs) * Number(req.body.PT02_cbs)) ]
 
             let pit02 = [(turno02[4] + turno02[5] + turno02[6] + turno02[7]) * 54,
-            Number(req.body.PIT02_hrs), Number(req.body.PIT02_cbs),
+            Number(req.body.PIT02_cbs), Number(req.body.PIT02_hrs),
         ((turno02[4] + turno02[5] + turno02[6] + turno02[7]) * 54)/ (Number(req.body.PIT02_hrs) * Number(req.body.PIT02_cbs))]
 
      
@@ -696,5 +697,1585 @@ exports.reporteDiarioSend = async (req, res) => {
 }
 
 exports.reporteMensualSend = async (req, res) => {
-    res.render('reporteMensual', {content})
+    const currentYear = new Date().getFullYear(); // Año actual
+    const currentMonth = req.body.date; // Mes actual (0-11 + 1)
+
+
+
+    
+
+
+    let addSheets = async (workbook) => {
+      //SOPLADO
+      workbook.addWorksheet("LITRO")
+      workbook.addWorksheet("MEDIO GALON")
+      workbook.addWorksheet("GALON")
+      //INYECCCION
+      workbook.addWorksheet("MEDIO LITRO")
+      workbook.addWorksheet("TAPAS")
+      // ETIQUETAS
+      workbook.addWorksheet("ETIQUETAS")
+      // INDICADORES
+      workbook.addWorksheet("INDICADORES")
+      // PAROS
+      workbook.addWorksheet("PAROS")
+      
+    }
+
+    let addTitles = async (workbook) => {
+      let worksheet = workbook.getWorksheet("LITRO")
+      
+      let row = worksheet.getRow(1)
+      //polietileno
+      row.getCell(1).value = "Fecha"
+      row.getCell(2).value = "Maquina"
+      row.getCell(3).value = "Calaborador"
+      row.getCell(4).value = "Turno"
+      row.getCell(5).value = "Insumo"
+      row.getCell(6).value = "Lote Insumo"
+      row.getCell(7).value = "Insumo Inicial"
+      row.getCell(8).value = "Insumo Final"
+      row.getCell(9).value = "Contenedor"
+      row.getCell(10).value = "Contenedor Inicial"
+      row.getCell(11).value = "Contenedor Final"
+      row.getCell(12).value = "Solicitud de Insumo"
+      row.getCell(13).value = "Solicitud de Insumo - Cantidad"
+      row.getCell(14).value = "Solicitud de Insumo - Folio"
+      row.getCell(15).value = "Solicitud de Insumo - Folio Salida"
+      row.getCell(16).value = "Inventario Iniciar"
+      row.getCell(17).value = "Inventario Final"
+      row.getCell(18).value = "Insumo Utilizado"
+      row.getCell(19).value = "Insumo Mermado"
+      row.getCell(20).value = "Insumo Validado"
+      row.getCell(21).value = "Insumo Marca"
+      //bolsa
+      row.getCell(22).value = "Fecha"
+      row.getCell(23).value = "Maquina"
+      row.getCell(24).value = "Calaborador"
+      row.getCell(25).value = "Turno"
+      row.getCell(26).value = "Insumo"
+      row.getCell(27).value = "Lote Insumo"
+      row.getCell(28).value = "Insumo Inicial"
+      row.getCell(29).value = "Insumo Final"
+      row.getCell(30).value = "Contenedor"
+      row.getCell(31).value = "Contenedor Inicial"
+      row.getCell(32).value = "Contenedor Final"
+      row.getCell(33).value = "Solicitud de Insumo"
+      row.getCell(34).value = "Solicitud de Insumo - Cantidad"
+      row.getCell(35).value = "Solicitud de Insumo - Folio"
+      row.getCell(36).value = "Solicitud de Insumo - Folio Salida"
+      row.getCell(37).value = "Inventario Iniciar"
+      row.getCell(38).value = "Inventario Final"
+      row.getCell(39).value = "Insumo Utilizado"
+      row.getCell(40).value = "Insumo Mermado"
+      row.getCell(41).value = "Insumo Validado"
+      row.getCell(42).value = "Insumo Marca"
+      //produccion
+      row.getCell(43).value = "Presentacion"
+      row.getCell(44).value = "Produccion Pzs"
+      row.getCell(45).value = "Produccion Contenedores"
+      row.getCell(46).value = "Lote de Produccion"
+      row.getCell(47).value = "Folio Entrada"
+      row.getCell(48).value = "Horometro Inicial"
+      row.getCell(49).value = "Horometro Final"
+
+    
+
+
+
+      // GALON COMPARTE INSUMOS CON MEDIO GALON
+      worksheet = workbook.getWorksheet("MEDIO GALON")
+      row = worksheet.getRow(1)
+
+      //POLIETILENO
+    //polietileno
+      row.getCell(1).value = "Fecha"
+      row.getCell(2).value = "Maquina"
+      row.getCell(3).value = "Calaborador"
+      row.getCell(4).value = "Turno"
+      row.getCell(5).value = "Insumo"
+      row.getCell(6).value = "Lote Insumo"
+      row.getCell(7).value = "Insumo Inicial"
+      row.getCell(8).value = "Insumo Final"
+      row.getCell(9).value = "Contenedor"
+      row.getCell(10).value = "Contenedor Inicial"
+      row.getCell(11).value = "Contenedor Final"
+      row.getCell(12).value = "Solicitud de Insumo"
+      row.getCell(13).value = "Solicitud de Insumo - Cantidad"
+      row.getCell(14).value = "Solicitud de Insumo - Folio"
+      row.getCell(15).value = "Solicitud de Insumo - Folio Salida"
+      row.getCell(16).value = "Inventario Iniciar"
+      row.getCell(17).value = "Inventario Final"
+      row.getCell(18).value = "Insumo Utilizado"
+      row.getCell(19).value = "Insumo Mermado"
+      row.getCell(20).value = "Insumo Validado"
+      row.getCell(21).value = "Insumo Marca"
+      //bolsa
+      row.getCell(22).value = "Fecha"
+      row.getCell(23).value = "Maquina"
+      row.getCell(24).value = "Calaborador"
+      row.getCell(25).value = "Turno"
+      row.getCell(26).value = "Insumo"
+      row.getCell(27).value = "Lote Insumo"
+      row.getCell(28).value = "Insumo Inicial"
+      row.getCell(29).value = "Insumo Final"
+      row.getCell(30).value = "Contenedor"
+      row.getCell(31).value = "Contenedor Inicial"
+      row.getCell(32).value = "Contenedor Final"
+      row.getCell(33).value = "Solicitud de Insumo"
+      row.getCell(34).value = "Solicitud de Insumo - Cantidad"
+      row.getCell(35).value = "Solicitud de Insumo - Folio"
+      row.getCell(36).value = "Solicitud de Insumo - Folio Salida"
+      row.getCell(37).value = "Inventario Iniciar"
+      row.getCell(38).value = "Inventario Final"
+      row.getCell(39).value = "Insumo Utilizado"
+      row.getCell(40).value = "Insumo Mermado"
+      row.getCell(41).value = "Insumo Validado"
+      row.getCell(42).value = "Insumo Marca"
+      //produccion
+      row.getCell(43).value = "Presentacion"
+      row.getCell(44).value = "Produccion Pzs"
+      row.getCell(45).value = "Produccion Contenedores"
+      row.getCell(46).value = "Lote de Produccion"
+      row.getCell(47).value = "Folio Entrada"
+      row.getCell(48).value = "Horometro Inicial"
+      row.getCell(49).value = "Horometro Final"
+
+
+
+       worksheet = workbook.getWorksheet("GALON")
+       
+      row = worksheet.getRow(1)
+
+
+ //polietileno
+      row.getCell(1).value = "Fecha"
+      row.getCell(2).value = "Maquina"
+      row.getCell(3).value = "Calaborador"
+      row.getCell(4).value = "Turno"
+      row.getCell(5).value = "Insumo"
+      row.getCell(6).value = "Lote Insumo"
+      row.getCell(7).value = "Insumo Inicial"
+      row.getCell(8).value = "Insumo Final"
+      row.getCell(9).value = "Contenedor"
+      row.getCell(10).value = "Contenedor Inicial"
+      row.getCell(11).value = "Contenedor Final"
+      row.getCell(12).value = "Solicitud de Insumo"
+      row.getCell(13).value = "Solicitud de Insumo - Cantidad"
+      row.getCell(14).value = "Solicitud de Insumo - Folio"
+      row.getCell(15).value = "Solicitud de Insumo - Folio Salida"
+      row.getCell(16).value = "Inventario Iniciar"
+      row.getCell(17).value = "Inventario Final"
+      row.getCell(18).value = "Insumo Utilizado"
+      row.getCell(19).value = "Insumo Mermado"
+      row.getCell(20).value = "Insumo Validado"
+      row.getCell(21).value = "Insumo Marca"
+      //bolsa
+      row.getCell(22).value = "Fecha"
+      row.getCell(23).value = "Maquina"
+      row.getCell(24).value = "Calaborador"
+      row.getCell(25).value = "Turno"
+      row.getCell(26).value = "Insumo"
+      row.getCell(27).value = "Lote Insumo"
+      row.getCell(28).value = "Insumo Inicial"
+      row.getCell(29).value = "Insumo Final"
+      row.getCell(30).value = "Contenedor"
+      row.getCell(31).value = "Contenedor Inicial"
+      row.getCell(32).value = "Contenedor Final"
+      row.getCell(33).value = "Solicitud de Insumo"
+      row.getCell(34).value = "Solicitud de Insumo - Cantidad"
+      row.getCell(35).value = "Solicitud de Insumo - Folio"
+      row.getCell(36).value = "Solicitud de Insumo - Folio Salida"
+      row.getCell(37).value = "Inventario Iniciar"
+      row.getCell(38).value = "Inventario Final"
+      row.getCell(39).value = "Insumo Utilizado"
+      row.getCell(40).value = "Insumo Mermado"
+      row.getCell(41).value = "Insumo Validado"
+      row.getCell(42).value = "Insumo Marca"
+      //produccion
+      row.getCell(43).value = "Presentacion"
+      row.getCell(44).value = "Produccion Pzs"
+      row.getCell(45).value = "Produccion Contenedores"
+      row.getCell(46).value = "Lote de Produccion"
+      row.getCell(47).value = "Folio Entrada"
+      row.getCell(48).value = "Horometro Inicial"
+      row.getCell(49).value = "Horometro Final"
+
+
+
+
+       worksheet = workbook.getWorksheet("MEDIO LITRO")
+       row = worksheet.getRow(1)
+       
+      //polietileno
+    row.getCell(1).value = "Fecha"
+    row.getCell(2).value = "Maquina"
+    row.getCell(3).value = "Calaborador"
+    row.getCell(4).value = "Turno"
+    row.getCell(5).value = "Insumo"
+    row.getCell(6).value = "Lote Insumo"
+    row.getCell(7).value = "Insumo Inicial"
+    row.getCell(8).value = "Insumo Final"
+    row.getCell(9).value = "Contenedor"
+    row.getCell(10).value = "Contenedor Inicial"
+    row.getCell(11).value = "Contenedor Final"
+    row.getCell(12).value = "Solicitud de Insumo"
+    row.getCell(13).value = "Solicitud de Insumo - Cantidad"
+    row.getCell(14).value = "Solicitud de Insumo - Folio"
+    row.getCell(15).value = "Solicitud de Insumo - Folio Salida"
+    row.getCell(16).value = "Inventario Iniciar"
+    row.getCell(17).value = "Inventario Final"
+    row.getCell(18).value = "Insumo Utilizado"
+    row.getCell(19).value = "Insumo Mermado"
+    row.getCell(20).value = "Insumo Validado"
+    row.getCell(21).value = "Insumo Marca"
+      //bolsa
+      row.getCell(22).value = "Fecha"
+      row.getCell(23).value = "Maquina"
+      row.getCell(24).value = "Calaborador"
+      row.getCell(25).value = "Turno"
+      row.getCell(26).value = "Insumo"
+      row.getCell(27).value = "Lote Insumo"
+      row.getCell(28).value = "Insumo Inicial"
+      row.getCell(29).value = "Insumo Final"
+      row.getCell(30).value = "Contenedor"
+      row.getCell(31).value = "Contenedor Inicial"
+      row.getCell(32).value = "Contenedor Final"
+      row.getCell(33).value = "Solicitud de Insumo"
+      row.getCell(34).value = "Solicitud de Insumo - Cantidad"
+      row.getCell(35).value = "Solicitud de Insumo - Folio"
+      row.getCell(36).value = "Solicitud de Insumo - Folio Salida"
+      row.getCell(37).value = "Inventario Iniciar"
+      row.getCell(38).value = "Inventario Final"
+      row.getCell(39).value = "Insumo Utilizado"
+      row.getCell(40).value = "Insumo Mermado"
+      row.getCell(41).value = "Insumo Validado"
+      row.getCell(42).value = "Insumo Marca"
+    
+
+       //pigmento blanco
+      row.getCell(43).value = "Fecha"
+      row.getCell(44).value = "Maquina"
+      row.getCell(45).value = "Calaborador"
+      row.getCell(46).value = "Turno"
+      row.getCell(47).value = "Insumo"
+      row.getCell(48).value = "Lote Insumo"
+      row.getCell(49).value = "Insumo Inicial"
+      row.getCell(50).value = "Insumo Final"
+      row.getCell(51).value = "Contenedor"
+      row.getCell(52).value = "Contenedor Inicial"
+      row.getCell(53).value = "Contenedor Final"
+      row.getCell(54).value = "Solicitud de Insumo"
+      row.getCell(55).value = "Solicitud de Insumo - Cantidad"
+      row.getCell(56).value = "Solicitud de Insumo - Folio"
+      row.getCell(57).value = "Solicitud de Insumo - Folio Salida"
+      row.getCell(58).value = "Inventario Iniciar"
+      row.getCell(59).value = "Inventario Final"
+      row.getCell(60).value = "Insumo Utilizado"
+      row.getCell(61).value = "Insumo Mermado"
+      row.getCell(62).value = "Insumo Validado"
+      row.getCell(63).value = "Insumo Marca"
+      //produccion
+      //produccion
+        //produccion
+      row.getCell(64).value = "Presentacion"
+      row.getCell(65).value = "Produccion Pzs"
+      row.getCell(66).value = "Produccion Contenedores"
+      row.getCell(67).value = "Lote de Produccion"
+      row.getCell(68).value = "Folio Entrada"
+      row.getCell(69).value = "Horometro Inicial"
+      row.getCell(70).value = "Horometro Final"
+
+
+      
+
+       worksheet = workbook.getWorksheet("TAPAS")
+        row = worksheet.getRow(1)
+
+     //polietileno
+      row.getCell(1).value = "Fecha"
+      row.getCell(2).value = "Maquina"
+      row.getCell(3).value = "Calaborador"
+      row.getCell(4).value = "Turno"
+      row.getCell(5).value = "Insumo"
+      row.getCell(6).value = "Lote Insumo"
+      row.getCell(7).value = "Insumo Inicial"
+      row.getCell(8).value = "Insumo Final"
+      row.getCell(9).value = "Contenedor"
+      row.getCell(10).value = "Contenedor Inicial"
+      row.getCell(11).value = "Contenedor Final"
+      row.getCell(12).value = "Solicitud de Insumo"
+      row.getCell(13).value = "Solicitud de Insumo - Cantidad"
+      row.getCell(14).value = "Solicitud de Insumo - Folio"
+      row.getCell(15).value = "Solicitud de Insumo - Folio Salida"
+      row.getCell(16).value = "Inventario Iniciar"
+      row.getCell(17).value = "Inventario Final"
+      row.getCell(18).value = "Insumo Utilizado"
+      row.getCell(19).value = "Insumo Mermado"
+      row.getCell(20).value = "Insumo Validado"
+      row.getCell(21).value = "Insumo Marca"
+      //caja
+      row.getCell(22).value = "Fecha"
+      row.getCell(23).value = "Maquina"
+      row.getCell(24).value = "Calaborador"
+      row.getCell(25).value = "Turno"
+      row.getCell(26).value = "Insumo"
+      row.getCell(27).value = "Lote Insumo"
+      row.getCell(28).value = "Insumo Inicial"
+      row.getCell(29).value = "Insumo Final"
+      row.getCell(30).value = "Contenedor"
+      row.getCell(31).value = "Contenedor Inicial"
+      row.getCell(32).value = "Contenedor Final"
+      row.getCell(33).value = "Solicitud de Insumo"
+      row.getCell(34).value = "Solicitud de Insumo - Cantidad"
+      row.getCell(35).value = "Solicitud de Insumo - Folio"
+      row.getCell(36).value = "Solicitud de Insumo - Folio Salida"
+      row.getCell(37).value = "Inventario Iniciar"
+      row.getCell(38).value = "Inventario Final"
+      row.getCell(39).value = "Insumo Utilizado"
+      row.getCell(40).value = "Insumo Mermado"
+      row.getCell(41).value = "Insumo Validado"
+      row.getCell(42).value = "Insumo Marca"
+    
+
+    
+      row.getCell(43).value = "Fecha"
+      row.getCell(44).value = "Maquina"
+      row.getCell(45).value = "Calaborador"
+      row.getCell(46).value = "Turno"
+      row.getCell(47).value = "Insumo"
+      row.getCell(48).value = "Lote Insumo"
+      row.getCell(49).value = "Insumo Inicial"
+      row.getCell(50).value = "Insumo Final"
+      row.getCell(51).value = "Contenedor"
+      row.getCell(52).value = "Contenedor Inicial"
+      row.getCell(53).value = "Contenedor Final"
+      row.getCell(54).value = "Solicitud de Insumo"
+      row.getCell(55).value = "Solicitud de Insumo - Cantidad"
+      row.getCell(56).value = "Solicitud de Insumo - Folio"
+      row.getCell(57).value = "Solicitud de Insumo - Folio Salida"
+      row.getCell(58).value = "Inventario Iniciar"
+      row.getCell(59).value = "Inventario Final"
+      row.getCell(60).value = "Insumo Utilizado"
+      row.getCell(61).value = "Insumo Mermado"
+      row.getCell(62).value = "Insumo Validado"
+      row.getCell(63).value = "Insumo Marca"
+
+        //pigmento 
+      row.getCell(64).value = "Fecha"
+      row.getCell(65).value = "Maquina"
+      row.getCell(66).value = "Calaborador"
+      row.getCell(67).value = "Turno"
+      row.getCell(68).value = "Insumo"
+      row.getCell(69).value = "Lote Insumo"
+      row.getCell(71).value = "Insumo Inicial"
+      row.getCell(72).value = "Insumo Final"
+      row.getCell(73).value = "Contenedor"
+      row.getCell(74).value = "Contenedor Inicial"
+      row.getCell(75).value = "Contenedor Final"
+      row.getCell(76).value = "Solicitud de Insumo"
+      row.getCell(77).value = "Solicitud de Insumo - Cantidad"
+      row.getCell(78).value = "Solicitud de Insumo - Folio"
+      row.getCell(79).value = "Solicitud de Insumo - Folio Salida"
+      row.getCell(80).value = "Inventario Iniciar"
+      row.getCell(81).value = "Inventario Final"
+      row.getCell(82).value = "Insumo Utilizado"
+      row.getCell(83).value = "Insumo Mermado"
+      row.getCell(84).value = "Insumo Validado"
+      row.getCell(85).value = "Insumo Marca"
+      //produccion
+ 
+      row.getCell(86).value = "Presentacion"
+      row.getCell(87).value = "Produccion Pzs"
+      row.getCell(88).value = "Produccion Contenedores"
+      row.getCell(89).value = "Lote de Produccion"
+      row.getCell(90).value = "Folio Entrada"
+      row.getCell(91).value = "Horometro Inicial"
+      row.getCell(92).value = "Horometro Final"
+
+
+
+         worksheet = workbook.getWorksheet("ETIQUETAS")
+          row = worksheet.getRow(1)
+
+       
+      //etiqeuta
+      row.getCell(1).value = "Fecha"
+      row.getCell(2).value = "Maquina"
+      row.getCell(3).value = "Calaborador"
+      row.getCell(4).value = "Turno"
+      row.getCell(5).value = "Insumo"
+      row.getCell(6).value = "Lote Insumo"
+      row.getCell(7).value = "Insumo Inicial"
+      row.getCell(8).value = "Insumo Final"
+      row.getCell(9).value = "Contenedor"
+      row.getCell(10).value = "Contenedor Inicial"
+      row.getCell(11).value = "Contenedor Final"
+      row.getCell(12).value = "Solicitud de Insumo"
+      row.getCell(13).value = "Solicitud de Insumo - Cantidad"
+      row.getCell(14).value = "Solicitud de Insumo - Folio"
+      row.getCell(15).value = "Solicitud de Insumo - Folio Salida"
+      row.getCell(16).value = "Inventario Iniciar"
+      row.getCell(17).value = "Inventario Final"
+      row.getCell(18).value = "Insumo Utilizado"
+      row.getCell(19).value = "Insumo Mermado"
+      row.getCell(20).value = "Insumo Validado"
+      row.getCell(21).value = "Insumo Marca"
+      //bolsa
+      row.getCell(22).value = "Fecha"
+      row.getCell(23).value = "Maquina"
+      row.getCell(24).value = "Calaborador"
+      row.getCell(25).value = "Turno"
+      row.getCell(26).value = "Insumo"
+      row.getCell(27).value = "Lote Insumo"
+      row.getCell(28).value = "Insumo Inicial"
+      row.getCell(29).value = "Insumo Final"
+      row.getCell(30).value = "Contenedor"
+      row.getCell(31).value = "Contenedor Inicial"
+      row.getCell(32).value = "Contenedor Final"
+      row.getCell(33).value = "Solicitud de Insumo"
+      row.getCell(34).value = "Solicitud de Insumo - Cantidad"
+      row.getCell(35).value = "Solicitud de Insumo - Folio"
+      row.getCell(36).value = "Solicitud de Insumo - Folio Salida"
+      row.getCell(37).value = "Inventario Iniciar"
+      row.getCell(38).value = "Inventario Final"
+      row.getCell(39).value = "Insumo Utilizado"
+      row.getCell(40).value = "Insumo Mermado"
+      row.getCell(41).value = "Insumo Validado"
+      row.getCell(42).value = "Insumo Marca"
+      //produccion
+      row.getCell(43).value = "Presentacion"
+      row.getCell(44).value = "Produccion Pzs"
+      row.getCell(45).value = "Produccion Contenedores"
+      row.getCell(46).value = "Lote de Produccion"
+      row.getCell(47).value = "Folio Entrada"
+      row.getCell(48).value = "Horometro Inicial"
+      row.getCell(49).value = "Horometro Final"
+
+
+
+
+
+
+
+      //paros
+
+       worksheet = workbook.getWorksheet("PAROS")
+        row = worksheet.getRow(1)
+
+       row.getCell(1).value = "Fecha"
+       row.getCell(2).value = "Colaborador"
+       row.getCell(3).value = "Maquina"
+       row.getCell(4).value = "Tipo Paro"
+       row.getCell(5).value = "Paro"
+       row.getCell(6).value = "Inicio"
+       row.getCell(7).value = "Final"
+       row.getCell(8).value = "Diferencia"
+
+    }
+
+
+    //se agregan valores a hojas con secuencia //poletileno - bolsa - produccion (litro)
+    let addValuesLitro = async (workbook) => {
+
+      let polietileno =  await insumos.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Insumo = 'Polietileno AD' AND
+          Maquina = 'Maquina 3'
+
+        `),
+        attributes: 
+          ['Date','Maquina','Colabor', 'Turno', 'Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
+            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
+            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
+            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
+          ]
+        
+      });
+
+      
+      let bolsa =  await insumos.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Insumo = 'Bolsa' AND
+          Maquina = 'Maquina 3'
+
+        `),
+        attributes: 
+          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
+            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
+            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
+            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
+          ]
+        
+      });
+
+      let producto =  await producciones.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Maquina = 'Maquina 3'
+
+        `),
+         attributes: 
+          ['Presentacion', 'ProduccionPzs', 'ProduccionContenedores', 'LoteProduccion', 'FolioEntrada', 'HorometroInicial', 'HorometroFinal'
+          ]
+        
+      });
+
+
+
+
+      if(producto.length == 0)  {
+        console.log("jto")
+        return console.log("vacio")
+      }
+
+
+
+
+  let worksheetLitro = workbook.getWorksheet("LITRO")
+      //polietileno
+      // Obtener fila 1
+
+         let cantidadRows = producto.length
+
+         /*  let insumo01Cols = 21, insumo02Cols = 21, produccionCols = 7
+
+          for (let i = 0; i < cantidadRows; i++) {
+            for (let j = 0; j< insumo01Cols; j++) {
+              row.getCell(j + 1).value = polietileno[i]
+            }
+
+            for (let j = 0; j< insumo02Cols; j++) {
+              row.getCell(j + 1 + 21).value = bolsa[i]
+            }*/
+
+
+        
+    for (let i = 0; i < cantidadRows; i++) {
+       let row = worksheetLitro.getRow(1 + 1);
+                console.log(polietileno[i].Date)
+            row.getCell(1).value =  polietileno[i].Date
+            row.getCell(2).value =  polietileno[i].Maquina
+            row.getCell(3).value =  polietileno[i].Colabor
+            row.getCell(4).value =  polietileno[i].Turno
+            row.getCell(5).value =  polietileno[i].Insumo
+            row.getCell(6).value =  polietileno[i].LoteInsumo
+            row.getCell(7).value =  polietileno[i].InsumoInicial
+            row.getCell(8).value =  polietileno[i].InsumoFinal
+            row.getCell(9).value =  polietileno[i].Contenedor
+            row.getCell(10).value = polietileno[i].ContenedorInicial
+            row.getCell(11).value = polietileno[i].ContenedorFinal
+            row.getCell(12).value = polietileno[i].SolicitudInsumo
+            row.getCell(13).value = polietileno[i].SolicitudInsumoQty
+            row.getCell(14).value = polietileno[i].SolicitudInsumoFolio
+            row.getCell(15).value = polietileno[i].SolicitudInsumoFolioSalida
+            row.getCell(16).value = polietileno[i].InventarioInicial
+            row.getCell(17).value = polietileno[i].InventarioFinal
+            row.getCell(18).value = polietileno[i].InsumoUtilizado  
+            row.getCell(19).value = polietileno[i].InsumoMermado
+            row.getCell(20).value = polietileno[i].InsumoValidado
+            row.getCell(21).value = polietileno[i].InsumoMarca
+
+            row.getCell(22).value = bolsa[i].Date
+            row.getCell(23).value = bolsa[i].Maquina
+            row.getCell(24).value = bolsa[i].Colabor
+            row.getCell(25).value = bolsa[i].Turno
+            row.getCell(26).value = bolsa[i].Insumo
+            row.getCell(27).value = bolsa[i].LoteInsumo
+            row.getCell(28).value = bolsa[i].InsumoInicial
+            row.getCell(29).value = bolsa[i].InsumoFinal
+            row.getCell(30).value = bolsa[i].Contenedor
+            row.getCell(31).value = bolsa[i].ContenedorInicial
+            row.getCell(32).value = bolsa[i].ContenedorFinal
+            row.getCell(33).value = bolsa[i].SolicitudInsumo
+            row.getCell(34).value = bolsa[i].SolicitudInsumoQty
+            row.getCell(35).value = bolsa[i].SolicitudInsumoFolio
+            row.getCell(36).value = bolsa[i].SolicitudInsumoFolioSalida
+            row.getCell(37).value = bolsa[i].InventarioInicial
+            row.getCell(38).value = bolsa[i].InventarioFinal
+            row.getCell(39).value = bolsa[i].InsumoUtilizado  
+            row.getCell(40).value = bolsa[i].InsumoMermado
+            row.getCell(41).value = bolsa[i].InsumoValidado
+            row.getCell(42).value = bolsa[i].InsumoMarca
+
+
+            row.getCell(43).value = producto[i].Presentacion
+            row.getCell(44).value = producto[i].ProduccionPzs
+            row.getCell(45).value = producto[i].ProduccionContenedores
+            row.getCell(46).value = producto[i].LoteProduccion
+            row.getCell(47).value = producto[i].FolioEntrada
+            row.getCell(48).value = producto[i].HorometroInicial
+            row.getCell(49).value = producto[i].HorometroFinal
+              
+
+
+
+
+
+          }
+        
+
+
+
+    }
+
+    //se agregan valores a hojas con secuencia //poletileno - bolsa - produccion (medio galon)
+    let addValuesMedioGalon = async (workbook) => {
+
+      let polietileno =  await insumos.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Insumo = 'Polietileno AD' AND
+          Maquina = 'Maquina 1 y 2'
+
+        `),
+        attributes: 
+          ['Date','Maquina','Colabor', 'Turno', 'Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
+            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
+            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
+            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
+          ]
+        
+      });
+
+      
+      let bolsa =  await insumos.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Insumo = 'Bolsa' AND
+          Maquina = 'Maquina 1 y 2'
+
+        `),
+        attributes: 
+          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
+            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
+            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
+            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
+          ]
+        
+      });
+
+      let producto =  await producciones.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Maquina = 'Maquina 1'
+
+        `),
+         attributes: 
+          ['Presentacion', 'ProduccionPzs', 'ProduccionContenedores', 'LoteProduccion', 'FolioEntrada', 'HorometroInicial', 'HorometroFinal'
+          ]
+        
+      });
+
+
+
+
+      if(producto.length == 0)  {
+        console.log("jto")
+        return console.log("vacio")
+      }
+
+
+
+
+  let worksheetLitro = workbook.getWorksheet("MEDIO GALON")
+      //polietileno
+      // Obtener fila 1
+
+         let cantidadRows = producto.length
+
+         /*  let insumo01Cols = 21, insumo02Cols = 21, produccionCols = 7
+
+          for (let i = 0; i < cantidadRows; i++) {
+            for (let j = 0; j< insumo01Cols; j++) {
+              row.getCell(j + 1).value = polietileno[i]
+            }
+
+            for (let j = 0; j< insumo02Cols; j++) {
+              row.getCell(j + 1 + 21).value = bolsa[i]
+            }*/
+
+
+        
+    for (let i = 0; i < cantidadRows; i++) {
+      let row = worksheetLitro.getRow(i + 2);
+                console.log(polietileno[i].Date)
+            row.getCell(1).value =  polietileno[i].Date
+            row.getCell(2).value =  polietileno[i].Maquina
+            row.getCell(3).value =  polietileno[i].Colabor
+            row.getCell(4).value =  polietileno[i].Turno
+            row.getCell(5).value =  polietileno[i].Insumo
+            row.getCell(6).value =  polietileno[i].LoteInsumo
+            row.getCell(7).value =  polietileno[i].InsumoInicial
+            row.getCell(8).value =  polietileno[i].InsumoFinal
+            row.getCell(9).value =  polietileno[i].Contenedor
+            row.getCell(10).value = polietileno[i].ContenedorInicial
+            row.getCell(11).value = polietileno[i].ContenedorFinal
+            row.getCell(12).value = polietileno[i].SolicitudInsumo
+            row.getCell(13).value = polietileno[i].SolicitudInsumoQty
+            row.getCell(14).value = polietileno[i].SolicitudInsumoFolio
+            row.getCell(15).value = polietileno[i].SolicitudInsumoFolioSalida
+            row.getCell(16).value = polietileno[i].InventarioInicial
+            row.getCell(17).value = polietileno[i].InventarioFinal
+            row.getCell(18).value = polietileno[i].InsumoUtilizado  
+            row.getCell(19).value = polietileno[i].InsumoMermado
+            row.getCell(20).value = polietileno[i].InsumoValidado
+            row.getCell(21).value = polietileno[i].InsumoMarca
+
+            row.getCell(22).value = bolsa[i].Date
+            row.getCell(23).value = bolsa[i].Maquina
+            row.getCell(24).value = bolsa[i].Colabor
+            row.getCell(25).value = bolsa[i].Turno
+            row.getCell(26).value = bolsa[i].Insumo
+            row.getCell(27).value = bolsa[i].LoteInsumo
+            row.getCell(28).value = bolsa[i].InsumoInicial
+            row.getCell(29).value = bolsa[i].InsumoFinal
+            row.getCell(30).value = bolsa[i].Contenedor
+            row.getCell(31).value = bolsa[i].ContenedorInicial
+            row.getCell(32).value = bolsa[i].ContenedorFinal
+            row.getCell(33).value = bolsa[i].SolicitudInsumo
+            row.getCell(34).value = bolsa[i].SolicitudInsumoQty
+            row.getCell(35).value = bolsa[i].SolicitudInsumoFolio
+            row.getCell(36).value = bolsa[i].SolicitudInsumoFolioSalida
+            row.getCell(37).value = bolsa[i].InventarioInicial
+            row.getCell(38).value = bolsa[i].InventarioFinal
+            row.getCell(39).value = bolsa[i].InsumoUtilizado  
+            row.getCell(40).value = bolsa[i].InsumoMermado
+            row.getCell(41).value = bolsa[i].InsumoValidado
+            row.getCell(42).value = bolsa[i].InsumoMarca
+
+
+            row.getCell(43).value = producto[i].Presentacion
+            row.getCell(44).value = producto[i].ProduccionPzs
+            row.getCell(45).value = producto[i].ProduccionContenedores
+            row.getCell(46).value = producto[i].LoteProduccion
+            row.getCell(47).value = producto[i].FolioEntrada
+            row.getCell(48).value = producto[i].HorometroInicial
+            row.getCell(49).value = producto[i].HorometroFinal
+              
+
+
+
+
+
+          }
+        
+
+
+
+    }
+
+    let addValuesGalon = async (workbook) => {
+
+      let polietileno =  await insumos.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Insumo = 'Polietileno AD' AND
+          Maquina = 'Maquina 1 y 2'
+
+        `),
+        attributes: 
+          ['Date','Maquina','Colabor', 'Turno', 'Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
+            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
+            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
+            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
+          ]
+        
+      });
+
+      
+      let bolsa =  await insumos.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Insumo = 'Bolsa' AND
+          Maquina = 'Maquina 1 y 2'
+
+        `),
+        attributes: 
+          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
+            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
+            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
+            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
+          ]
+        
+      });
+
+      let producto =  await producciones.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Maquina = 'Maquina 2'
+
+        `),
+         attributes: 
+          ['Presentacion', 'ProduccionPzs', 'ProduccionContenedores', 'LoteProduccion', 'FolioEntrada', 'HorometroInicial', 'HorometroFinal'
+          ]
+        
+      });
+
+      if(producto.length == 0)  {
+        console.log("jto")
+        return console.log("vacio")
+      }
+
+
+
+
+
+
+
+  let worksheetLitro = workbook.getWorksheet("GALON")
+      //polietileno
+      // Obtener fila 1
+
+         let cantidadRows = producto.length
+
+         /*  let insumo01Cols = 21, insumo02Cols = 21, produccionCols = 7
+
+          for (let i = 0; i < cantidadRows; i++) {
+            for (let j = 0; j< insumo01Cols; j++) {
+              row.getCell(j + 1).value = polietileno[i]
+            }
+
+            for (let j = 0; j< insumo02Cols; j++) {
+              row.getCell(j + 1 + 21).value = bolsa[i]
+            }*/
+
+
+        
+    for (let i = 0; i < cantidadRows; i++) {
+      
+      let row = worksheetLitro.getRow(i + 2);
+                console.log(polietileno[i].Date)
+            row.getCell(1).value =  polietileno[i].Date
+            row.getCell(2).value =  polietileno[i].Maquina
+            row.getCell(3).value =  polietileno[i].Colabor
+            row.getCell(4).value =  polietileno[i].Turno
+            row.getCell(5).value =  polietileno[i].Insumo
+            row.getCell(6).value =  polietileno[i].LoteInsumo
+            row.getCell(7).value =  polietileno[i].InsumoInicial
+            row.getCell(8).value =  polietileno[i].InsumoFinal
+            row.getCell(9).value =  polietileno[i].Contenedor
+            row.getCell(10).value = polietileno[i].ContenedorInicial
+            row.getCell(11).value = polietileno[i].ContenedorFinal
+            row.getCell(12).value = polietileno[i].SolicitudInsumo
+            row.getCell(13).value = polietileno[i].SolicitudInsumoQty
+            row.getCell(14).value = polietileno[i].SolicitudInsumoFolio
+            row.getCell(15).value = polietileno[i].SolicitudInsumoFolioSalida
+            row.getCell(16).value = polietileno[i].InventarioInicial
+            row.getCell(17).value = polietileno[i].InventarioFinal
+            row.getCell(18).value = polietileno[i].InsumoUtilizado  
+            row.getCell(19).value = polietileno[i].InsumoMermado
+            row.getCell(20).value = polietileno[i].InsumoValidado
+            row.getCell(21).value = polietileno[i].InsumoMarca
+
+            row.getCell(22).value = bolsa[i].Date
+            row.getCell(23).value = bolsa[i].Maquina
+            row.getCell(24).value = bolsa[i].Colabor
+            row.getCell(25).value = bolsa[i].Turno
+            row.getCell(26).value = bolsa[i].Insumo
+            row.getCell(27).value = bolsa[i].LoteInsumo
+            row.getCell(28).value = bolsa[i].InsumoInicial
+            row.getCell(29).value = bolsa[i].InsumoFinal
+            row.getCell(30).value = bolsa[i].Contenedor
+            row.getCell(31).value = bolsa[i].ContenedorInicial
+            row.getCell(32).value = bolsa[i].ContenedorFinal
+            row.getCell(33).value = bolsa[i].SolicitudInsumo
+            row.getCell(34).value = bolsa[i].SolicitudInsumoQty
+            row.getCell(35).value = bolsa[i].SolicitudInsumoFolio
+            row.getCell(36).value = bolsa[i].SolicitudInsumoFolioSalida
+            row.getCell(37).value = bolsa[i].InventarioInicial
+            row.getCell(38).value = bolsa[i].InventarioFinal
+            row.getCell(39).value = bolsa[i].InsumoUtilizado  
+            row.getCell(40).value = bolsa[i].InsumoMermado
+            row.getCell(41).value = bolsa[i].InsumoValidado
+            row.getCell(42).value = bolsa[i].InsumoMarca
+
+
+            row.getCell(43).value = producto[i].Presentacion
+            row.getCell(44).value = producto[i].ProduccionPzs
+            row.getCell(45).value = producto[i].ProduccionContenedores
+            row.getCell(46).value = producto[i].LoteProduccion
+            row.getCell(47).value = producto[i].FolioEntrada
+            row.getCell(48).value = producto[i].HorometroInicial
+            row.getCell(49).value = producto[i].HorometroFinal
+              
+
+
+
+
+
+          }
+        
+
+
+
+    }
+
+    let addValuesMedioLitro = async (workbook) => {
+
+      let polietileno =  await insumos.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Insumo = 'Polietileno AD' AND
+          Maquina = 'Maquina Rochelau'
+
+        `),
+        attributes: 
+          ['Date','Maquina','Colabor', 'Turno', 'Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
+            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
+            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
+            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
+          ]
+        
+      });
+
+      
+      let bolsa =  await insumos.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Insumo = 'Bolsa' AND
+          Maquina = 'Maquina Rochelau'
+
+        `),
+        attributes: 
+          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
+            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
+            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
+            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
+          ]
+        
+      });
+
+
+      let pigmento =  await insumos.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Insumo = 'Pigmento Blanco' AND
+          Maquina = 'Maquina Rochelau'
+
+        `),
+        attributes: 
+          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
+            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
+            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
+            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
+          ]
+        
+      });
+
+      let producto =  await producciones.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Maquina = 'Maquina Rochelau'
+
+        `),
+         attributes: 
+          ['Presentacion', 'ProduccionPzs', 'ProduccionContenedores', 'LoteProduccion', 'FolioEntrada', 'HorometroInicial', 'HorometroFinal'
+          ]
+        
+      });
+
+
+      if(producto.length == 0)  {
+        console.log("jto")
+        return console.log("vacio")
+      }
+
+
+
+
+
+
+  let worksheetLitro = workbook.getWorksheet("MEDIO LITRO")
+      //polietileno
+      // Obtener fila 1
+
+         let cantidadRows = producto.length
+
+         /*  let insumo01Cols = 21, insumo02Cols = 21, produccionCols = 7
+
+          for (let i = 0; i < cantidadRows; i++) {
+            for (let j = 0; j< insumo01Cols; j++) {
+              row.getCell(j + 1).value = polietileno[i]
+            }
+
+            for (let j = 0; j< insumo02Cols; j++) {
+              row.getCell(j + 1 + 21).value = bolsa[i]
+            }*/
+
+
+        
+    for (let i = 0; i < cantidadRows; i++) {
+      
+      let row = worksheetLitro.getRow(i + 2);
+                console.log(polietileno[i].Date)
+            row.getCell(1).value =  polietileno[i].Date
+            row.getCell(2).value =  polietileno[i].Maquina
+            row.getCell(3).value =  polietileno[i].Colabor
+            row.getCell(4).value =  polietileno[i].Turno
+            row.getCell(5).value =  polietileno[i].Insumo
+            row.getCell(6).value =  polietileno[i].LoteInsumo
+            row.getCell(7).value =  polietileno[i].InsumoInicial
+            row.getCell(8).value =  polietileno[i].InsumoFinal
+            row.getCell(9).value =  polietileno[i].Contenedor
+            row.getCell(10).value = polietileno[i].ContenedorInicial
+            row.getCell(11).value = polietileno[i].ContenedorFinal
+            row.getCell(12).value = polietileno[i].SolicitudInsumo
+            row.getCell(13).value = polietileno[i].SolicitudInsumoQty
+            row.getCell(14).value = polietileno[i].SolicitudInsumoFolio
+            row.getCell(15).value = polietileno[i].SolicitudInsumoFolioSalida
+            row.getCell(16).value = polietileno[i].InventarioInicial
+            row.getCell(17).value = polietileno[i].InventarioFinal
+            row.getCell(18).value = polietileno[i].InsumoUtilizado  
+            row.getCell(19).value = polietileno[i].InsumoMermado
+            row.getCell(20).value = polietileno[i].InsumoValidado
+            row.getCell(21).value = polietileno[i].InsumoMarca
+
+            row.getCell(22).value = bolsa[i].Date
+            row.getCell(23).value = bolsa[i].Maquina
+            row.getCell(24).value = bolsa[i].Colabor
+            row.getCell(25).value = bolsa[i].Turno
+            row.getCell(26).value = bolsa[i].Insumo
+            row.getCell(27).value = bolsa[i].LoteInsumo
+            row.getCell(28).value = bolsa[i].InsumoInicial
+            row.getCell(29).value = bolsa[i].InsumoFinal
+            row.getCell(30).value = bolsa[i].Contenedor
+            row.getCell(31).value = bolsa[i].ContenedorInicial
+            row.getCell(32).value = bolsa[i].ContenedorFinal
+            row.getCell(33).value = bolsa[i].SolicitudInsumo
+            row.getCell(34).value = bolsa[i].SolicitudInsumoQty
+            row.getCell(35).value = bolsa[i].SolicitudInsumoFolio
+            row.getCell(36).value = bolsa[i].SolicitudInsumoFolioSalida
+            row.getCell(37).value = bolsa[i].InventarioInicial
+            row.getCell(38).value = bolsa[i].InventarioFinal
+            row.getCell(39).value = bolsa[i].InsumoUtilizado  
+            row.getCell(40).value = bolsa[i].InsumoMermado
+            row.getCell(41).value = bolsa[i].InsumoValidado
+            row.getCell(42).value = bolsa[i].InsumoMarca
+
+
+            row.getCell(43).value = pigmento[i].Date
+            row.getCell(44).value = pigmento[i].Maquina
+            row.getCell(45).value = pigmento[i].Colabor
+            row.getCell(46).value = pigmento[i].Turno
+            row.getCell(47).value = pigmento[i].Insumo
+            row.getCell(48).value = pigmento[i].LoteInsumo
+            row.getCell(49).value = pigmento[i].InsumoInicial
+            row.getCell(50).value = pigmento[i].InsumoFinal
+            row.getCell(51).value = pigmento[i].Contenedor
+            row.getCell(52).value = pigmento[i].ContenedorInicial
+            row.getCell(53).value = pigmento[i].ContenedorFinal
+            row.getCell(54).value = pigmento[i].SolicitudInsumo
+            row.getCell(55).value = pigmento[i].SolicitudInsumoQty
+            row.getCell(56).value = pigmento[i].SolicitudInsumoFolio
+            row.getCell(57).value = pigmento[i].SolicitudInsumoFolioSalida
+            row.getCell(58).value = pigmento[i].InventarioInicial
+            row.getCell(59).value = pigmento[i].InventarioFinal
+            row.getCell(60).value = pigmento[i].InsumoUtilizado  
+            row.getCell(61).value = pigmento[i].InsumoMermado
+            row.getCell(62).value = pigmento[i].InsumoValidado
+            row.getCell(63).value = pigmento[i].InsumoMarca
+
+
+            row.getCell(64).value = producto[i].Presentacion
+            row.getCell(65).value = producto[i].ProduccionPzs
+            row.getCell(66).value = producto[i].ProduccionContenedores
+            row.getCell(68).value = producto[i].LoteProduccion
+            row.getCell(69).value = producto[i].FolioEntrada
+            row.getCell(70).value = producto[i].HorometroInicial
+            row.getCell(71).value = producto[i].HorometroFinal
+              
+
+
+
+
+
+          }
+        
+
+
+
+    }
+
+    let addValuesTapas = async (workbook) => {
+
+      let polietileno =  await insumos.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Insumo = 'Polietileno BD' AND
+          Maquina = 'Maquina Efecta'
+
+        `),
+        attributes: 
+          ['Date','Maquina','Colabor', 'Turno', 'Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
+            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
+            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
+            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
+          ]
+        
+      });
+
+      
+      let bolsa =  await insumos.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Insumo = 'Bolsa' AND
+          Maquina = 'Maquina Efecta'
+
+        `),
+        attributes: 
+          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
+            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
+            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
+            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
+          ]
+        
+      });
+
+       let caja =  await insumos.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Insumo = 'Caja' AND
+          Maquina = 'Maquina Efecta'
+
+        `),
+        attributes: 
+          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
+            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
+            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
+            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
+          ]
+        
+      });
+
+
+      let pigmento =  await insumos.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Insumo = 'Pigmento' AND
+          Maquina = 'Maquina Efecta'
+
+        `),
+        attributes: 
+          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
+            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
+            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
+            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
+          ]
+        
+      });
+
+      let producto =  await producciones.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Maquina = 'Maquina Efecta'
+
+        `),
+         attributes: 
+          ['Presentacion', 'ProduccionPzs', 'ProduccionContenedores', 'LoteProduccion', 'FolioEntrada', 'HorometroInicial', 'HorometroFinal'
+          ]
+        
+      });
+
+      console.log(producto[0])
+      console.log(producto)
+
+
+      if(producto.length == 0)  {
+        console.log("jto")
+        return console.log("vacio")
+      }
+
+
+  let worksheetLitro = workbook.getWorksheet("TAPAS")
+      //polietileno
+      // Obtener fila 1
+
+         let cantidadRows = producto.length
+
+         /*  let insumo01Cols = 21, insumo02Cols = 21, produccionCols = 7
+
+          for (let i = 0; i < cantidadRows; i++) {
+            for (let j = 0; j< insumo01Cols; j++) {
+              row.getCell(j + 1).value = polietileno[i]
+            }
+
+            for (let j = 0; j< insumo02Cols; j++) {
+              row.getCell(j + 1 + 21).value = bolsa[i]
+            }*/
+
+
+        
+    for (let i = 0; i < cantidadRows; i++) {
+      
+      let row = worksheetLitro.getRow(i + 2);
+                console.log(polietileno[i].Date)
+            row.getCell(1).value =  polietileno[i].Date
+            row.getCell(2).value =  polietileno[i].Maquina
+            row.getCell(3).value =  polietileno[i].Colabor
+            row.getCell(4).value =  polietileno[i].Turno
+            row.getCell(5).value =  polietileno[i].Insumo
+            row.getCell(6).value =  polietileno[i].LoteInsumo
+            row.getCell(7).value =  polietileno[i].InsumoInicial
+            row.getCell(8).value =  polietileno[i].InsumoFinal
+            row.getCell(9).value =  polietileno[i].Contenedor
+            row.getCell(10).value = polietileno[i].ContenedorInicial
+            row.getCell(11).value = polietileno[i].ContenedorFinal
+            row.getCell(12).value = polietileno[i].SolicitudInsumo
+            row.getCell(13).value = polietileno[i].SolicitudInsumoQty
+            row.getCell(14).value = polietileno[i].SolicitudInsumoFolio
+            row.getCell(15).value = polietileno[i].SolicitudInsumoFolioSalida
+            row.getCell(16).value = polietileno[i].InventarioInicial
+            row.getCell(17).value = polietileno[i].InventarioFinal
+            row.getCell(18).value = polietileno[i].InsumoUtilizado  
+            row.getCell(19).value = polietileno[i].InsumoMermado
+            row.getCell(20).value = polietileno[i].InsumoValidado
+            row.getCell(21).value = polietileno[i].InsumoMarca
+
+            row.getCell(22).value = bolsa[i].Date
+            row.getCell(23).value = bolsa[i].Maquina
+            row.getCell(24).value = bolsa[i].Colabor
+            row.getCell(25).value = bolsa[i].Turno
+            row.getCell(26).value = bolsa[i].Insumo
+            row.getCell(27).value = bolsa[i].LoteInsumo
+            row.getCell(28).value = bolsa[i].InsumoInicial
+            row.getCell(29).value = bolsa[i].InsumoFinal
+            row.getCell(30).value = bolsa[i].Contenedor
+            row.getCell(31).value = bolsa[i].ContenedorInicial
+            row.getCell(32).value = bolsa[i].ContenedorFinal
+            row.getCell(33).value = bolsa[i].SolicitudInsumo
+            row.getCell(34).value = bolsa[i].SolicitudInsumoQty
+            row.getCell(35).value = bolsa[i].SolicitudInsumoFolio
+            row.getCell(36).value = bolsa[i].SolicitudInsumoFolioSalida
+            row.getCell(37).value = bolsa[i].InventarioInicial
+            row.getCell(38).value = bolsa[i].InventarioFinal
+            row.getCell(39).value = bolsa[i].InsumoUtilizado  
+            row.getCell(40).value = bolsa[i].InsumoMermado
+            row.getCell(41).value = bolsa[i].InsumoValidado
+            row.getCell(42).value = bolsa[i].InsumoMarca
+
+            row.getCell(43).value = caja[i].Date
+            row.getCell(44).value = caja[i].Maquina
+            row.getCell(45).value = caja[i].Colabor
+            row.getCell(46).value = caja[i].Turno
+            row.getCell(47).value = caja[i].Insumo
+            row.getCell(48).value = caja[i].LoteInsumo
+            row.getCell(49).value = caja[i].InsumoInicial
+            row.getCell(50).value = caja[i].InsumoFinal
+            row.getCell(51).value = caja[i].Contenedor
+            row.getCell(52).value = caja[i].ContenedorInicial
+            row.getCell(53).value = caja[i].ContenedorFinal
+            row.getCell(54).value = caja[i].SolicitudInsumo
+            row.getCell(55).value = caja[i].SolicitudInsumoQty
+            row.getCell(56).value = caja[i].SolicitudInsumoFolio
+            row.getCell(57).value = caja[i].SolicitudInsumoFolioSalida
+            row.getCell(58).value = caja[i].InventarioInicial
+            row.getCell(59).value = caja[i].InventarioFinal
+            row.getCell(60).value = caja[i].InsumoUtilizado  
+            row.getCell(61).value = caja[i].InsumoMermado
+            row.getCell(62).value = caja[i].InsumoValidado
+            row.getCell(63).value = caja[i].InsumoMarca
+
+
+
+            row.getCell(64).value = pigmento[i].Date
+            row.getCell(65).value = pigmento[i].Maquina
+            row.getCell(66).value = pigmento[i].Colabor
+            row.getCell(67).value = pigmento[i].Turno
+            row.getCell(68).value = pigmento[i].Insumo
+            row.getCell(69).value = pigmento[i].LoteInsumo
+            row.getCell(70).value = pigmento[i].InsumoInicial
+            row.getCell(71).value = pigmento[i].InsumoFinal
+            row.getCell(72).value = pigmento[i].Contenedor
+            row.getCell(73).value = pigmento[i].ContenedorInicial
+            row.getCell(74).value = pigmento[i].ContenedorFinal
+            row.getCell(75).value = pigmento[i].SolicitudInsumo
+            row.getCell(76).value = pigmento[i].SolicitudInsumoQty
+            row.getCell(77).value = pigmento[i].SolicitudInsumoFolio
+            row.getCell(78).value = pigmento[i].SolicitudInsumoFolioSalida
+            row.getCell(79).value = pigmento[i].InventarioInicial
+            row.getCell(80).value = pigmento[i].InventarioFinal
+            row.getCell(81).value = pigmento[i].InsumoUtilizado  
+            row.getCell(82).value = pigmento[i].InsumoMermado
+            row.getCell(83).value = pigmento[i].InsumoValidado
+            row.getCell(84).value = pigmento[i].InsumoMarca
+
+
+            row.getCell(85).value = producto[i].Presentacion
+            row.getCell(86).value = producto[i].ProduccionPzs
+            row.getCell(87).value = producto[i].ProduccionContenedores
+            row.getCell(88).value = producto[i].LoteProduccion
+            row.getCell(89).value = producto[i].FolioEntrada
+            row.getCell(90).value = producto[i].HorometroInicial
+            row.getCell(91).value = producto[i].HorometroFinal
+              
+
+
+
+
+
+          }
+        
+
+
+
+    }
+
+    let addValuesEtiquetas = async (workbook) => {
+
+      let etiqueta =  await insumos.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Insumo = 'Etiqueta' AND
+          Maquina = 'Maquina Tunel de Calor'
+
+        `),
+        attributes: 
+          ['Date','Maquina','Colabor', 'Turno', 'Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
+            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
+            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
+            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
+          ]
+        
+      });
+
+      
+      let bolsa =  await insumos.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Insumo = 'Bolsa' AND
+          Maquina = 'Maquina Tunel de Calor'
+
+        `),
+        attributes: 
+          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
+            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
+            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
+            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
+          ]
+        
+      });
+
+      let producto =  await producciones.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} AND
+          Maquina = 'Maquina Tunel de Calor'
+
+        `),
+         attributes: 
+          ['Presentacion', 'ProduccionPzs', 'ProduccionContenedores', 'LoteProduccion', 'FolioEntrada', 'HorometroInicial', 'HorometroFinal'
+          ]
+        
+      });
+
+
+
+
+      if(producto.length == 0)  {
+        console.log("jto")
+        return console.log("vacio 02")
+      }
+
+
+
+
+  let worksheetLitro = workbook.getWorksheet("ETIQUETAS")
+      //polietileno
+      // Obtener fila 1
+         
+
+         let cantidadRows = producto.length
+
+         /*  let insumo01Cols = 21, insumo02Cols = 21, produccionCols = 7
+
+          for (let i = 0; i < cantidadRows; i++) {
+            for (let j = 0; j< insumo01Cols; j++) {
+              row.getCell(j + 1).value = polietileno[i]
+            }
+
+            for (let j = 0; j< insumo02Cols; j++) {
+              row.getCell(j + 1 + 21).value = bolsa[i]
+            }*/
+
+
+        
+    for (let i = 0; i < cantidadRows; i++) {
+      
+      let row = worksheetLitro.getRow(i + 2);
+            row.getCell(1).value =  etiqueta[i].Date
+            row.getCell(2).value =  etiqueta[i].Maquina
+            row.getCell(3).value =  etiqueta[i].Colabor
+            row.getCell(4).value =  etiqueta[i].Turno
+            row.getCell(5).value =  etiqueta[i].Insumo
+            row.getCell(6).value =  etiqueta[i].LoteInsumo
+            row.getCell(7).value =  etiqueta[i].InsumoInicial
+            row.getCell(8).value =  etiqueta[i].InsumoFinal
+            row.getCell(9).value =  etiqueta[i].Contenedor
+            row.getCell(10).value = etiqueta[i].ContenedorInicial
+            row.getCell(11).value = etiqueta[i].ContenedorFinal
+            row.getCell(12).value = etiqueta[i].SolicitudInsumo
+            row.getCell(13).value = etiqueta[i].SolicitudInsumoQty
+            row.getCell(14).value = etiqueta[i].SolicitudInsumoFolio
+            row.getCell(15).value = etiqueta[i].SolicitudInsumoFolioSalida
+            row.getCell(16).value = etiqueta[i].InventarioInicial
+            row.getCell(17).value = etiqueta[i].InventarioFinal
+            row.getCell(18).value = etiqueta[i].InsumoUtilizado  
+            row.getCell(19).value = etiqueta[i].InsumoMermado
+            row.getCell(20).value = etiqueta[i].InsumoValidado
+            row.getCell(21).value = etiqueta[i].InsumoMarca
+
+            row.getCell(22).value = bolsa[i].Date
+            row.getCell(23).value = bolsa[i].Maquina
+            row.getCell(24).value = bolsa[i].Colabor
+            row.getCell(25).value = bolsa[i].Turno
+            row.getCell(26).value = bolsa[i].Insumo
+            row.getCell(27).value = bolsa[i].LoteInsumo
+            row.getCell(28).value = bolsa[i].InsumoInicial
+            row.getCell(29).value = bolsa[i].InsumoFinal
+            row.getCell(30).value = bolsa[i].Contenedor
+            row.getCell(31).value = bolsa[i].ContenedorInicial
+            row.getCell(32).value = bolsa[i].ContenedorFinal
+            row.getCell(33).value = bolsa[i].SolicitudInsumo
+            row.getCell(34).value = bolsa[i].SolicitudInsumoQty
+            row.getCell(35).value = bolsa[i].SolicitudInsumoFolio
+            row.getCell(36).value = bolsa[i].SolicitudInsumoFolioSalida
+            row.getCell(37).value = bolsa[i].InventarioInicial
+            row.getCell(38).value = bolsa[i].InventarioFinal
+            row.getCell(39).value = bolsa[i].InsumoUtilizado  
+            row.getCell(40).value = bolsa[i].InsumoMermado
+            row.getCell(41).value = bolsa[i].InsumoValidado
+            row.getCell(42).value = bolsa[i].InsumoMarca
+
+
+            row.getCell(43).value = producto[i].Presentacion
+            row.getCell(44).value = producto[i].ProduccionPzs
+            row.getCell(45).value = producto[i].ProduccionContenedores
+            row.getCell(46).value = producto[i].LoteProduccion
+            row.getCell(47).value = producto[i].FolioEntrada
+            row.getCell(48).value = producto[i].HorometroInicial
+            row.getCell(49).value = producto[i].HorometroFinal
+              
+
+
+
+
+
+          }
+        
+
+
+
+    }
+
+
+    let addValuesParos= async (workbook) => {
+
+
+      let producto =  await paros.findAll({
+        where: Sequelize.literal(`
+          MONTH(Date) = ${currentMonth} AND
+          YEAR(Date) = ${currentYear} 
+
+        `),
+         attributes: 
+          ['Date', 'Colabor', 'Maquina', 'TipoParo', 'Paro', 'HoraInicio', 'HoraFinal', 'DifMinutos']
+        
+      });
+
+
+
+
+      if(producto.length == 0)  {
+        console.log("jto")
+        return console.log("vacio 02")
+      }
+
+
+
+
+  let worksheetLitro = workbook.getWorksheet("Paros")
+      //polietileno
+      // Obtener fila 1
+         
+
+         let cantidadRows = producto.length
+
+
+
+        
+    for (let i = 0; i < cantidadRows; i++) {
+   
+
+      row.getCell(43).value = producto[i].Date
+      row.getCell(43).value = producto[i].Colabor
+      row.getCell(44).value = producto[i].Maquina
+      row.getCell(45).value = producto[i].TipoParo
+      row.getCell(46).value = producto[i].Paro
+      row.getCell(47).value = producto[i].HoraInicio
+      row.getCell(48).value = producto[i].HoraFinal
+      row.getCell(49).value = producto[i].DifMinutos
+              
+    }
+        
+
+
+
+    }
+
+
+
+    
+
+    const filePath = 'reporteMensual.xlsx';
+
+    async function obtenerWorkbook(filePath) {
+      const workbook = new ExcelJS.Workbook()
+      
+
+        return { workbook };
+    }
+
+    const { workbook } = await obtenerWorkbook(filePath)
+
+      await addSheets(workbook)
+      await addTitles(workbook)
+      await addValuesLitro(workbook)
+      await addValuesMedioGalon(workbook)
+      await addValuesGalon(workbook)
+      await addValuesMedioLitro(workbook)
+      await addValuesTapas(workbook)
+      await addValuesEtiquetas(workbook)
+      await addValuesParos(workbook)
+
+
+    await workbook.xlsx.writeFile('Reporte Mensual.xlsx')
+
+
+  
+
+    
+    res.render('reporteMensual')
 }

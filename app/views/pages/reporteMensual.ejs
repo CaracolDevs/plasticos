@@ -27,10 +27,10 @@
     </header>
 
     <div class="container-xxl">
-        <form class="basic-form first formCatMain" action="/reportes/reporteMensual/send" enctype="x-www-form-urlencoded" method="POST" onSubmit="return confirm('Este valor se borrara DIFNITIVAMENTE, esta seguro de continuar?');">
+        <form class="basic-form first formCatMain" action="/reportes/reporteMensual/send" enctype="x-www-form-urlencoded" method="POST" onSubmit="return confirm('Se agregara este valor, desea continuar?');">
             <span>Fecha:</span><br>
             
-            <input class="custom-btn btn-7" required type="date" name="date"  id="date">
+            <input class="custom-btn btn-7" required type="number" min="1" max="12" name="date"  id="date">
             <br><br>
 
 
