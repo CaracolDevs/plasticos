@@ -1,0 +1,60 @@
+{
+  "development": {
+    "LP":{
+      "username": "sa",
+      "password": "dbsa",
+      "database": "Empresa",
+      "host": "canaslp.sytes.net",
+      "dialect": "mssql",
+      "port": "1433"
+    },
+    "CC":{
+      "username": "sa",
+      "password": "dbsa",
+      "database": "Empresa",
+      "host": "canascc.sytes.net",
+      "dialect": "mssql",
+      "port": "1433"
+    },
+    "LO":{
+      "username": "sa",
+      "password": "dbsa",
+      "database": "Test",
+      "host": "canaslo.sytes.net",
+      "dialect": "mssql",
+      "port": "1433"
+    },
+    "SR":{
+      "username": "sa",
+      "password": "dbsa",
+      "database": "Test",
+      "host": "canassr.sytes.net",
+      "dialect": "mssql",
+      "port": "1433"
+    },
+    "SJ":{
+      "username": "sa",
+      "password": "dbsa",
+      "database": "Test",
+      "host": "canassj.sytes.net",
+      "dialect": "mssql",
+      "port": "1433"
+    }
+  },
+  "test": {
+    "username": "sa",
+    "password": "dbsa",
+    "database": "Empresa",
+    "host": "192.168.2.173",
+    "dialect": "mssql",
+    "port": "49170"
+  },
+  "production": {
+    "username": "sa",
+    "password": "dbsa",
+    "database": "Empresa",
+    "host": "192.168.2.173",
+    "dialect": "mssql",
+    "port": "49170"
+  }
+}
