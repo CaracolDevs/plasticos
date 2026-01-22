@@ -256,18 +256,6 @@ exports.reportesMESend = async (req, res) => {
 
 }
 
-exports.reportesMTSend = async (req, res) => {
-
-
-   guardarInsumo(req, req.body.I01, true, 'Etiqueta', '06', 'Maquina Tunel de Calor')
-   guardarInsumo(req, req.body.I02, false, 'Bolsa', '06', 'Maquina Tunel de Calor')
-   guardarProduccion(req, req.body.MT,'06', 'Maquina Tunel de Calor')
-
-
-}
-
-
-
 
 exports.reportesMTSend = async (req, res) => {
 
