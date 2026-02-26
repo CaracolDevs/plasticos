@@ -9,6 +9,7 @@ const paros = require('../models/value').paros;
 const insumos = require('../models/value').insumos;
 const producciones = require('../models/value').producciones;
 const fs = require('fs')
+const path = require('path');
 
 
 const ExcelJS = require('exceljs');
@@ -93,6 +94,7 @@ let guardarInsumo = async (req, insumo, contenedor, name, idMaquina, nameMaquina
 
 
     console.log("MARCA:" , insumo.marca)
+    console.log(insumo)
 
    
 
@@ -186,6 +188,21 @@ let guardarProduccion = async (req, produccion, idMaquina, maquina) => {
 
     let date = new Date(req.body.date)
 
+    console.log("PRODUCCCION")
+    console.log(produccion)
+
+    let embolsador01 = 0, embolsador02 = 0
+
+    if(produccion.embolsador01 != undefined ) {
+      embolsador01 = produccion.embolsador01
+
+    }
+
+    if(produccion.embolsador02 != undefined ) {
+      embolsador02 = produccion.embolsador02
+
+    }
+
   const produccionCreate = await producciones.create
     ({
         MaquinaId: Number(idMaquina),
@@ -200,7 +217,13 @@ let guardarProduccion = async (req, produccion, idMaquina, maquina) => {
         LoteProduccion: produccion.lote,
         FolioEntrada: produccion.folioEntrada,
         HorometroInicial: Number(produccion.HI),
-        HorometroFinal: Number(produccion.HF)
+        HorometroFinal: Number(produccion.HF),
+        InsumoUtilizado: Number(produccion.MPutilizada),
+        MermaPzs: Number(produccion.mermaPzs),
+        MermaBolsas: Number(produccion.mermaBolsas),
+        MermaInsumoUtilizado:  Number(produccion.MPutilizadaMerma),
+        Embolsador01: embolsador01,
+        Embolsador02: embolsador02,
 
 
 
@@ -249,7 +272,7 @@ exports.reportesMESend = async (req, res) => {
    guardarInsumo(req, req.body.I01, true, 'Polietileno BD', '05', 'Maquina Efecta')
    guardarInsumo(req, req.body.I02, false, 'Caja', '05', 'Maquina Efecta')
    guardarInsumo(req, req.body.I03, false, 'Bolsa', '05', 'Maquina Efecta')
-   guardarInsumo(req, req.body.I03, false, 'Pigmento', '05', 'Maquina Efecta')
+   guardarInsumo(req, req.body.I04, false, 'Pigmento '+req.body.I04.color, '05', 'Maquina Efecta')
    guardarProduccion(req, req.body.ME,'05', 'Maquina Efecta')
    res.redirect(req.get('referer'));
 
@@ -672,7 +695,7 @@ exports.reporteDiarioSend = async (req, res) => {
       
       
 
-      await workbook.xlsx.writeFile('reporte.xlsx');
+      await workbook.xlsx.writeFile('Excel/reporte.xlsx');
       console.log('Archivo generado!');
     }
 
@@ -684,1586 +707,862 @@ exports.reporteDiarioSend = async (req, res) => {
     res.redirect(req.get('referer'));
 }
 
+
+
 exports.reporteMensualSend = async (req, res) => {
-    const currentYear = new Date().getFullYear(); // Año actual
-    const currentMonth = req.body.date; // Mes actual (0-11 + 1)
+  //genera la hoja del dia en el worksheet
+    async function generarHojaDelDia() {
+  const hoy = new Date(req.body.date)
 
+  const year = hoy.getFullYear();
+  const month = hoy.getMonth() + 1;
+  const day = hoy.getUTCDate();
 
+  const monthStr = String(month).padStart(2, '0');
 
+  const carpetaExcel = path.join(__dirname, '../../Excel');
+  if (!fs.existsSync(carpetaExcel)) {
+    fs.mkdirSync(carpetaExcel);
+  }
+
+  const archivoPlantilla = path.join(__dirname, '../../Excel/Ejemplo.xlsx');
+  const archivoMes = path.join(carpetaExcel, `${year}-${monthStr}.xlsx`);
+
+  let filePath = '../../Excel'
+  let sheetName = `${year}-${monthStr}.xlsx`
+
+  const workbookMes = new ExcelJS.Workbook();
+
+  // Abrir o crear archivo del mes
+  if (fs.existsSync(archivoMes)) {
+    await workbookMes.xlsx.readFile(archivoMes);
+  } else {
+    await workbookMes.xlsx.writeFile(archivoMes);
+  }
+
+  // Abrir plantilla
+  const workbookPlantilla = new ExcelJS.Workbook();
+  await workbookPlantilla.xlsx.readFile(archivoPlantilla);
+  const hojaPlantilla = workbookPlantilla.worksheets[0];
+
+  const nombreHojaDia = `Dia ${day}`;
+
+  // Verificar si la hoja ya existe
+  if (workbookMes.getWorksheet(nombreHojaDia)) {
+    console.log(`La hoja "${nombreHojaDia}" ya existe`);
+    return {workbookMes, archivoMes, nombreHojaDia, filePath};
+  }
+
+  // Crear hoja del día
+  const nuevaHoja = workbookMes.addWorksheet(nombreHojaDia);
+
+  // Copiar columnas
+  nuevaHoja.columns = hojaPlantilla.columns.map(col => ({
+    header: col.header,
+    key: col.key,
+    width: col.width
+  }));
+
+  // Copiar filas y alturas
+  hojaPlantilla.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+    const nuevaFila = nuevaHoja.getRow(rowNumber);
+    nuevaFila.values = row.values;
+    nuevaFila.height = row.height;
+  });
+
+  // Copiar estilos celda por celda
+  hojaPlantilla.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      nuevaHoja.getCell(rowNumber, colNumber).style = { ...cell.style };
+    });
+  });
+
+  // Guardar archivo del mes
+  await workbookMes.xlsx.writeFile(archivoMes);
+
+  console.log(`Hoja "${nombreHojaDia}" creada correctamente en ${archivoMes}`);
+
+    return {workbookMes, archivoMes, nombreHojaDia, filePath}
+    }
     
+    const {workbookMes,archivoMes,nombreHojaDia, filePath} = await generarHojaDelDia()
+    let date = new Date(req.body.date)
 
-
-    let addSheets = async (workbook) => {
-      //SOPLADO
-      workbook.addWorksheet("LITRO")
-      workbook.addWorksheet("MEDIO GALON")
-      workbook.addWorksheet("GALON")
-      //INYECCCION
-      workbook.addWorksheet("MEDIO LITRO")
-      workbook.addWorksheet("TAPAS")
-      // ETIQUETAS
-      workbook.addWorksheet("ETIQUETAS")
-      // INDICADORES
-      workbook.addWorksheet("INDICADORES")
-      // PAROS
-      workbook.addWorksheet("PAROS")
-      
+    let getInsumo =  async (maquina, turno) => {
+      let result =  await insumos.findAll({
+        where: {
+            Maquina: maquina,
+            Turno: turno,
+            Date: date 
+        }
+        ,
+        order: [
+         ['Insumo', 'DESC']
+  ]
+      })
+      return result
     }
 
-    let addTitles = async (workbook) => {
-      let worksheet = workbook.getWorksheet("LITRO")
+    let getProducto =  async (maquina, turno) => {
+      let result =  await producciones.findAll({
+        where: {
+            Maquina: maquina,
+            Turno: turno,
+            Date: date 
+        }
+      })
+      return result
+    }
+
+
+    let getValuesMaquina = async (maquinaProducto, turno, maquinaInsumo) => {
+      let insumo = await getInsumo(maquinaInsumo, turno)
+      let producto = await getProducto(maquinaProducto, turno)
+      return {insumo, producto}
       
-      let row = worksheet.getRow(1)
-      //polietileno
-      row.getCell(1).value = "Fecha"
-      row.getCell(2).value = "Maquina"
-      row.getCell(3).value = "Calaborador"
-      row.getCell(4).value = "Turno"
-      row.getCell(5).value = "Insumo"
-      row.getCell(6).value = "Lote Insumo"
-      row.getCell(7).value = "Insumo Inicial"
-      row.getCell(8).value = "Insumo Final"
-      row.getCell(9).value = "Contenedor"
-      row.getCell(10).value = "Contenedor Inicial"
-      row.getCell(11).value = "Contenedor Final"
-      row.getCell(12).value = "Solicitud de Insumo"
-      row.getCell(13).value = "Solicitud de Insumo - Cantidad"
-      row.getCell(14).value = "Solicitud de Insumo - Folio"
-      row.getCell(15).value = "Solicitud de Insumo - Folio Salida"
-      row.getCell(16).value = "Inventario Iniciar"
-      row.getCell(17).value = "Inventario Final"
-      row.getCell(18).value = "Insumo Utilizado"
-      row.getCell(19).value = "Insumo Mermado"
-      row.getCell(20).value = "Insumo Validado"
-      row.getCell(21).value = "Insumo Marca"
-      //bolsa
-      row.getCell(22).value = "Fecha"
-      row.getCell(23).value = "Maquina"
-      row.getCell(24).value = "Calaborador"
-      row.getCell(25).value = "Turno"
-      row.getCell(26).value = "Insumo"
-      row.getCell(27).value = "Lote Insumo"
-      row.getCell(28).value = "Insumo Inicial"
-      row.getCell(29).value = "Insumo Final"
-      row.getCell(30).value = "Contenedor"
-      row.getCell(31).value = "Contenedor Inicial"
-      row.getCell(32).value = "Contenedor Final"
-      row.getCell(33).value = "Solicitud de Insumo"
-      row.getCell(34).value = "Solicitud de Insumo - Cantidad"
-      row.getCell(35).value = "Solicitud de Insumo - Folio"
-      row.getCell(36).value = "Solicitud de Insumo - Folio Salida"
-      row.getCell(37).value = "Inventario Iniciar"
-      row.getCell(38).value = "Inventario Final"
-      row.getCell(39).value = "Insumo Utilizado"
-      row.getCell(40).value = "Insumo Mermado"
-      row.getCell(41).value = "Insumo Validado"
-      row.getCell(42).value = "Insumo Marca"
-      //produccion
-      row.getCell(43).value = "Presentacion"
-      row.getCell(44).value = "Produccion Pzs"
-      row.getCell(45).value = "Produccion Contenedores"
-      row.getCell(46).value = "Lote de Produccion"
-      row.getCell(47).value = "Folio Entrada"
-      row.getCell(48).value = "Horometro Inicial"
-      row.getCell(49).value = "Horometro Final"
+    } 
+/*
+    //conseguir worksheet
+    async function obtenerWorksheet(filePath, sheetName) {
+       const workbook = new ExcelJS.Workbook()
+       // Si el archivo existe, lo abre
+       if (fs.existsSync(filePath)) {
+         await workbook.xlsx.readFile(filePath);
+       }
+     
+       // Buscar la hoja
+       let worksheet = workbook.getWorksheet(sheetName);
+     
+       // Si NO existe la hoja, se crea
+       if (!worksheet) {
+         worksheet = workbook.addWorksheet(sheetName);
+       
+       }
+     
+       return { workbook, worksheet };
+    }
+
+    let { workbook, worksheet } = await obtenerWorksheet(filePath, nombreHojaDia)*/
+
+
+
+
+
 
     
+    //maquina 01
 
-
-
-      // GALON COMPARTE INSUMOS CON MEDIO GALON
-      worksheet = workbook.getWorksheet("MEDIO GALON")
-      row = worksheet.getRow(1)
-
-      //POLIETILENO
-    //polietileno
-      row.getCell(1).value = "Fecha"
-      row.getCell(2).value = "Maquina"
-      row.getCell(3).value = "Calaborador"
-      row.getCell(4).value = "Turno"
-      row.getCell(5).value = "Insumo"
-      row.getCell(6).value = "Lote Insumo"
-      row.getCell(7).value = "Insumo Inicial"
-      row.getCell(8).value = "Insumo Final"
-      row.getCell(9).value = "Contenedor"
-      row.getCell(10).value = "Contenedor Inicial"
-      row.getCell(11).value = "Contenedor Final"
-      row.getCell(12).value = "Solicitud de Insumo"
-      row.getCell(13).value = "Solicitud de Insumo - Cantidad"
-      row.getCell(14).value = "Solicitud de Insumo - Folio"
-      row.getCell(15).value = "Solicitud de Insumo - Folio Salida"
-      row.getCell(16).value = "Inventario Iniciar"
-      row.getCell(17).value = "Inventario Final"
-      row.getCell(18).value = "Insumo Utilizado"
-      row.getCell(19).value = "Insumo Mermado"
-      row.getCell(20).value = "Insumo Validado"
-      row.getCell(21).value = "Insumo Marca"
-      //bolsa
-      row.getCell(22).value = "Fecha"
-      row.getCell(23).value = "Maquina"
-      row.getCell(24).value = "Calaborador"
-      row.getCell(25).value = "Turno"
-      row.getCell(26).value = "Insumo"
-      row.getCell(27).value = "Lote Insumo"
-      row.getCell(28).value = "Insumo Inicial"
-      row.getCell(29).value = "Insumo Final"
-      row.getCell(30).value = "Contenedor"
-      row.getCell(31).value = "Contenedor Inicial"
-      row.getCell(32).value = "Contenedor Final"
-      row.getCell(33).value = "Solicitud de Insumo"
-      row.getCell(34).value = "Solicitud de Insumo - Cantidad"
-      row.getCell(35).value = "Solicitud de Insumo - Folio"
-      row.getCell(36).value = "Solicitud de Insumo - Folio Salida"
-      row.getCell(37).value = "Inventario Iniciar"
-      row.getCell(38).value = "Inventario Final"
-      row.getCell(39).value = "Insumo Utilizado"
-      row.getCell(40).value = "Insumo Mermado"
-      row.getCell(41).value = "Insumo Validado"
-      row.getCell(42).value = "Insumo Marca"
-      //produccion
-      row.getCell(43).value = "Presentacion"
-      row.getCell(44).value = "Produccion Pzs"
-      row.getCell(45).value = "Produccion Contenedores"
-      row.getCell(46).value = "Lote de Produccion"
-      row.getCell(47).value = "Folio Entrada"
-      row.getCell(48).value = "Horometro Inicial"
-      row.getCell(49).value = "Horometro Final"
-
-
-
-       worksheet = workbook.getWorksheet("GALON")
-       
-      row = worksheet.getRow(1)
-
-
- //polietileno
-      row.getCell(1).value = "Fecha"
-      row.getCell(2).value = "Maquina"
-      row.getCell(3).value = "Calaborador"
-      row.getCell(4).value = "Turno"
-      row.getCell(5).value = "Insumo"
-      row.getCell(6).value = "Lote Insumo"
-      row.getCell(7).value = "Insumo Inicial"
-      row.getCell(8).value = "Insumo Final"
-      row.getCell(9).value = "Contenedor"
-      row.getCell(10).value = "Contenedor Inicial"
-      row.getCell(11).value = "Contenedor Final"
-      row.getCell(12).value = "Solicitud de Insumo"
-      row.getCell(13).value = "Solicitud de Insumo - Cantidad"
-      row.getCell(14).value = "Solicitud de Insumo - Folio"
-      row.getCell(15).value = "Solicitud de Insumo - Folio Salida"
-      row.getCell(16).value = "Inventario Iniciar"
-      row.getCell(17).value = "Inventario Final"
-      row.getCell(18).value = "Insumo Utilizado"
-      row.getCell(19).value = "Insumo Mermado"
-      row.getCell(20).value = "Insumo Validado"
-      row.getCell(21).value = "Insumo Marca"
-      //bolsa
-      row.getCell(22).value = "Fecha"
-      row.getCell(23).value = "Maquina"
-      row.getCell(24).value = "Calaborador"
-      row.getCell(25).value = "Turno"
-      row.getCell(26).value = "Insumo"
-      row.getCell(27).value = "Lote Insumo"
-      row.getCell(28).value = "Insumo Inicial"
-      row.getCell(29).value = "Insumo Final"
-      row.getCell(30).value = "Contenedor"
-      row.getCell(31).value = "Contenedor Inicial"
-      row.getCell(32).value = "Contenedor Final"
-      row.getCell(33).value = "Solicitud de Insumo"
-      row.getCell(34).value = "Solicitud de Insumo - Cantidad"
-      row.getCell(35).value = "Solicitud de Insumo - Folio"
-      row.getCell(36).value = "Solicitud de Insumo - Folio Salida"
-      row.getCell(37).value = "Inventario Iniciar"
-      row.getCell(38).value = "Inventario Final"
-      row.getCell(39).value = "Insumo Utilizado"
-      row.getCell(40).value = "Insumo Mermado"
-      row.getCell(41).value = "Insumo Validado"
-      row.getCell(42).value = "Insumo Marca"
-      //produccion
-      row.getCell(43).value = "Presentacion"
-      row.getCell(44).value = "Produccion Pzs"
-      row.getCell(45).value = "Produccion Contenedores"
-      row.getCell(46).value = "Lote de Produccion"
-      row.getCell(47).value = "Folio Entrada"
-      row.getCell(48).value = "Horometro Inicial"
-      row.getCell(49).value = "Horometro Final"
-
-
-
-
-       worksheet = workbook.getWorksheet("MEDIO LITRO")
-       row = worksheet.getRow(1)
-       
-      //polietileno
-    row.getCell(1).value = "Fecha"
-    row.getCell(2).value = "Maquina"
-    row.getCell(3).value = "Calaborador"
-    row.getCell(4).value = "Turno"
-    row.getCell(5).value = "Insumo"
-    row.getCell(6).value = "Lote Insumo"
-    row.getCell(7).value = "Insumo Inicial"
-    row.getCell(8).value = "Insumo Final"
-    row.getCell(9).value = "Contenedor"
-    row.getCell(10).value = "Contenedor Inicial"
-    row.getCell(11).value = "Contenedor Final"
-    row.getCell(12).value = "Solicitud de Insumo"
-    row.getCell(13).value = "Solicitud de Insumo - Cantidad"
-    row.getCell(14).value = "Solicitud de Insumo - Folio"
-    row.getCell(15).value = "Solicitud de Insumo - Folio Salida"
-    row.getCell(16).value = "Inventario Iniciar"
-    row.getCell(17).value = "Inventario Final"
-    row.getCell(18).value = "Insumo Utilizado"
-    row.getCell(19).value = "Insumo Mermado"
-    row.getCell(20).value = "Insumo Validado"
-    row.getCell(21).value = "Insumo Marca"
-      //bolsa
-      row.getCell(22).value = "Fecha"
-      row.getCell(23).value = "Maquina"
-      row.getCell(24).value = "Calaborador"
-      row.getCell(25).value = "Turno"
-      row.getCell(26).value = "Insumo"
-      row.getCell(27).value = "Lote Insumo"
-      row.getCell(28).value = "Insumo Inicial"
-      row.getCell(29).value = "Insumo Final"
-      row.getCell(30).value = "Contenedor"
-      row.getCell(31).value = "Contenedor Inicial"
-      row.getCell(32).value = "Contenedor Final"
-      row.getCell(33).value = "Solicitud de Insumo"
-      row.getCell(34).value = "Solicitud de Insumo - Cantidad"
-      row.getCell(35).value = "Solicitud de Insumo - Folio"
-      row.getCell(36).value = "Solicitud de Insumo - Folio Salida"
-      row.getCell(37).value = "Inventario Iniciar"
-      row.getCell(38).value = "Inventario Final"
-      row.getCell(39).value = "Insumo Utilizado"
-      row.getCell(40).value = "Insumo Mermado"
-      row.getCell(41).value = "Insumo Validado"
-      row.getCell(42).value = "Insumo Marca"
-    
-
-       //pigmento blanco
-      row.getCell(43).value = "Fecha"
-      row.getCell(44).value = "Maquina"
-      row.getCell(45).value = "Calaborador"
-      row.getCell(46).value = "Turno"
-      row.getCell(47).value = "Insumo"
-      row.getCell(48).value = "Lote Insumo"
-      row.getCell(49).value = "Insumo Inicial"
-      row.getCell(50).value = "Insumo Final"
-      row.getCell(51).value = "Contenedor"
-      row.getCell(52).value = "Contenedor Inicial"
-      row.getCell(53).value = "Contenedor Final"
-      row.getCell(54).value = "Solicitud de Insumo"
-      row.getCell(55).value = "Solicitud de Insumo - Cantidad"
-      row.getCell(56).value = "Solicitud de Insumo - Folio"
-      row.getCell(57).value = "Solicitud de Insumo - Folio Salida"
-      row.getCell(58).value = "Inventario Iniciar"
-      row.getCell(59).value = "Inventario Final"
-      row.getCell(60).value = "Insumo Utilizado"
-      row.getCell(61).value = "Insumo Mermado"
-      row.getCell(62).value = "Insumo Validado"
-      row.getCell(63).value = "Insumo Marca"
-      //produccion
-      //produccion
-        //produccion
-      row.getCell(64).value = "Presentacion"
-      row.getCell(65).value = "Produccion Pzs"
-      row.getCell(66).value = "Produccion Contenedores"
-      row.getCell(67).value = "Lote de Produccion"
-      row.getCell(68).value = "Folio Entrada"
-      row.getCell(69).value = "Horometro Inicial"
-      row.getCell(70).value = "Horometro Final"
-
-
+    let displayValuesMaquina1 = async (worksheet) => {
+      let valuesTurno01 = await getValuesMaquina('Maquina 1',1, 'Maquina 1 y 2')
+      let valuesTurno02 = await getValuesMaquina('Maquina 1',2, 'Maquina 1 y 2')
       
-
-       worksheet = workbook.getWorksheet("TAPAS")
-        row = worksheet.getRow(1)
-
-     //polietileno
-      row.getCell(1).value = "Fecha"
-      row.getCell(2).value = "Maquina"
-      row.getCell(3).value = "Calaborador"
-      row.getCell(4).value = "Turno"
-      row.getCell(5).value = "Insumo"
-      row.getCell(6).value = "Lote Insumo"
-      row.getCell(7).value = "Insumo Inicial"
-      row.getCell(8).value = "Insumo Final"
-      row.getCell(9).value = "Contenedor"
-      row.getCell(10).value = "Contenedor Inicial"
-      row.getCell(11).value = "Contenedor Final"
-      row.getCell(12).value = "Solicitud de Insumo"
-      row.getCell(13).value = "Solicitud de Insumo - Cantidad"
-      row.getCell(14).value = "Solicitud de Insumo - Folio"
-      row.getCell(15).value = "Solicitud de Insumo - Folio Salida"
-      row.getCell(16).value = "Inventario Iniciar"
-      row.getCell(17).value = "Inventario Final"
-      row.getCell(18).value = "Insumo Utilizado"
-      row.getCell(19).value = "Insumo Mermado"
-      row.getCell(20).value = "Insumo Validado"
-      row.getCell(21).value = "Insumo Marca"
-      //caja
-      row.getCell(22).value = "Fecha"
-      row.getCell(23).value = "Maquina"
-      row.getCell(24).value = "Calaborador"
-      row.getCell(25).value = "Turno"
-      row.getCell(26).value = "Insumo"
-      row.getCell(27).value = "Lote Insumo"
-      row.getCell(28).value = "Insumo Inicial"
-      row.getCell(29).value = "Insumo Final"
-      row.getCell(30).value = "Contenedor"
-      row.getCell(31).value = "Contenedor Inicial"
-      row.getCell(32).value = "Contenedor Final"
-      row.getCell(33).value = "Solicitud de Insumo"
-      row.getCell(34).value = "Solicitud de Insumo - Cantidad"
-      row.getCell(35).value = "Solicitud de Insumo - Folio"
-      row.getCell(36).value = "Solicitud de Insumo - Folio Salida"
-      row.getCell(37).value = "Inventario Iniciar"
-      row.getCell(38).value = "Inventario Final"
-      row.getCell(39).value = "Insumo Utilizado"
-      row.getCell(40).value = "Insumo Mermado"
-      row.getCell(41).value = "Insumo Validado"
-      row.getCell(42).value = "Insumo Marca"
-    
-
-    
-      row.getCell(43).value = "Fecha"
-      row.getCell(44).value = "Maquina"
-      row.getCell(45).value = "Calaborador"
-      row.getCell(46).value = "Turno"
-      row.getCell(47).value = "Insumo"
-      row.getCell(48).value = "Lote Insumo"
-      row.getCell(49).value = "Insumo Inicial"
-      row.getCell(50).value = "Insumo Final"
-      row.getCell(51).value = "Contenedor"
-      row.getCell(52).value = "Contenedor Inicial"
-      row.getCell(53).value = "Contenedor Final"
-      row.getCell(54).value = "Solicitud de Insumo"
-      row.getCell(55).value = "Solicitud de Insumo - Cantidad"
-      row.getCell(56).value = "Solicitud de Insumo - Folio"
-      row.getCell(57).value = "Solicitud de Insumo - Folio Salida"
-      row.getCell(58).value = "Inventario Iniciar"
-      row.getCell(59).value = "Inventario Final"
-      row.getCell(60).value = "Insumo Utilizado"
-      row.getCell(61).value = "Insumo Mermado"
-      row.getCell(62).value = "Insumo Validado"
-      row.getCell(63).value = "Insumo Marca"
-
-        //pigmento 
-      row.getCell(64).value = "Fecha"
-      row.getCell(65).value = "Maquina"
-      row.getCell(66).value = "Calaborador"
-      row.getCell(67).value = "Turno"
-      row.getCell(68).value = "Insumo"
-      row.getCell(69).value = "Lote Insumo"
-      row.getCell(71).value = "Insumo Inicial"
-      row.getCell(72).value = "Insumo Final"
-      row.getCell(73).value = "Contenedor"
-      row.getCell(74).value = "Contenedor Inicial"
-      row.getCell(75).value = "Contenedor Final"
-      row.getCell(76).value = "Solicitud de Insumo"
-      row.getCell(77).value = "Solicitud de Insumo - Cantidad"
-      row.getCell(78).value = "Solicitud de Insumo - Folio"
-      row.getCell(79).value = "Solicitud de Insumo - Folio Salida"
-      row.getCell(80).value = "Inventario Iniciar"
-      row.getCell(81).value = "Inventario Final"
-      row.getCell(82).value = "Insumo Utilizado"
-      row.getCell(83).value = "Insumo Mermado"
-      row.getCell(84).value = "Insumo Validado"
-      row.getCell(85).value = "Insumo Marca"
-      //produccion
  
-      row.getCell(86).value = "Presentacion"
-      row.getCell(87).value = "Produccion Pzs"
-      row.getCell(88).value = "Produccion Contenedores"
-      row.getCell(89).value = "Lote de Produccion"
-      row.getCell(90).value = "Folio Entrada"
-      row.getCell(91).value = "Horometro Inicial"
-      row.getCell(92).value = "Horometro Final"
+      // verificar si encontro data TURNO 1
+      console.log(valuesTurno01)
+      if(valuesTurno01.insumo.length > 0 && valuesTurno01.producto.length > 0) {
+        let insumos = valuesTurno01.insumo
+        let productos = valuesTurno01.producto
+        // si hay insumos siempre habra producto, por eso no se revisa por separado, 
+        // cada maquina tiene una cantidad de insumos, en la maquina 1 se usan 2, por eso accedemos a 2 resultados de estos
+
+        console.log(insumos[0].dataValues)
+        console.log(insumos[1].dataValues)
+        console.log(productos[0].dataValues)
+        //con los datos ya fetcheados los tenemos que poner en el archivo
+      //  if (fs.existsSync(filePath)) {
+      //   await workbook.xlsx.readFile(filePath);
+      // }
+     
+       // Buscar la hoja
+       //let worksheet = workbookMes.getWorksheet(nombreHojaDia);
+       //console.log(nombreHojaDia, filePath)
+        // colocar valores en hoja
+        // COLOCAL INSUMOS
+        worksheet.getCell('C5').value = insumos[0].dataValues['InsumoInicial']
+        worksheet.getCell('C6').value = insumos[0].dataValues['ContenedorInicial']
+        worksheet.getCell('D7').value = insumos[1].dataValues['InsumoInicial']
+        worksheet.getCell('E5').value = insumos[0].dataValues['SolicitudInsumoQty']
+        worksheet.getCell('E7').value = insumos[1].dataValues['SolicitudInsumoQty']
+
+        worksheet.getCell('B8').value = insumos[1].dataValues['LoteInsumo']
+        worksheet.getCell('B9').value = insumos[0].dataValues['LoteInsumo']
+
+
+        worksheet.getCell('G5').value = insumos[0].dataValues['InsumoFinal']
+        worksheet.getCell('G6').value = insumos[0].dataValues['ContenedorFinal']
+        worksheet.getCell('H7').value = insumos[1].dataValues['InsumoFinal']
+
+        
+        worksheet.getCell('C11').value = productos[0].dataValues['HorometroInicial']
+        worksheet.getCell('F11').value = productos[0].dataValues['HorometroFinal']
+        worksheet.getCell('H11').value = (productos[0].dataValues['HorometroFinal'] - productos[0].dataValues['HorometroInicial'])
+        worksheet.getCell('B12').value = productos[0].dataValues['Presentacion']
+        worksheet.getCell('B13').value = productos[0].dataValues['ProduccionContenedores']
+        worksheet.getCell('B14').value = productos[0].dataValues['ProduccionPzs']
+        worksheet.getCell('B15').value = productos[0].dataValues['InsumoUtilizado']
+        worksheet.getCell('B16').value = productos[0].dataValues['LoteProduccion']
+        worksheet.getCell('D16').value = productos[0].dataValues['Colabor']
+        worksheet.getCell('E16').value = productos[0].dataValues['Embolsador01']
+        worksheet.getCell('F16').value = productos[0].dataValues['Embolsador02']
+
+        worksheet.getCell('H13').value = productos[0].dataValues['MermaBolsas']
+        worksheet.getCell('H14').value = productos[0].dataValues['MermaPzs']
+        worksheet.getCell('H15').value = productos[0].dataValues['MermaInsumoUtilziado']
+        
 
 
 
-         worksheet = workbook.getWorksheet("ETIQUETAS")
-          row = worksheet.getRow(1)
 
+
+       await workbookMes.xlsx.writeFile(archivoMes);
+      
+      }
+
+
+      // VERIFICAR DATOS TURNO 2
+       if(valuesTurno02.insumo.length > 0 && valuesTurno02.producto.length > 0) {
+        let insumos = valuesTurno02.insumo
+        let productos = valuesTurno02.producto
+        // si hay insumos siempre habra producto, por eso no se revisa por separado, 
+        // cada maquina tiene una cantidad de insumos, en la maquina 1 se usan 2, por eso accedemos a 2 resultados de estos
+
+        //con los datos ya fetcheados los tenemos que poner en el archivo
+      //  if (fs.existsSync(filePath)) {
+      //   await workbook.xlsx.readFile(filePath);
+      // }
+     
+       // Buscar la hoja
+       //let worksheet = workbookMes.getWorksheet(nombreHojaDia);
+       //console.log(nombreHojaDia, filePath)
+        // colocar valores en hoja
+        // COLOCAL INSUMOS
+        worksheet.getCell('C97').value = insumos[0].dataValues['InsumoInicial']
+        worksheet.getCell('C98').value = insumos[0].dataValues['ContenedorInicial']
+        worksheet.getCell('D99').value = insumos[1].dataValues['InsumoInicial']
+        worksheet.getCell('E97').value = insumos[0].dataValues['SolicitudInsumoQty']
+        worksheet.getCell('E99').value = insumos[1].dataValues['SolicitudInsumoQty']
+
+        worksheet.getCell('G97').value = insumos[0].dataValues['InsumoFinal']
+        worksheet.getCell('G98').value = insumos[0].dataValues['ContenedorFinal']
+        worksheet.getCell('H99').value = insumos[1].dataValues['InsumoFinal']
+
+        worksheet.getCell('B100').value = insumos[1].dataValues['LoteInsumo']
+        worksheet.getCell('B101').value = insumos[0].dataValues['LoteInsumo']
+
+        
+        worksheet.getCell('C103').value = productos[0].dataValues['HorometroInicial']
+        worksheet.getCell('F103').value = productos[0].dataValues['HorometroFinal']
+        worksheet.getCell('H103').value = (productos[0].dataValues['HorometroFinal'] - productos[0].dataValues['HorometroInicial'])
+        worksheet.getCell('B104').value = productos[0].dataValues['Presentacion']
+        worksheet.getCell('B105').value = productos[0].dataValues['ProduccionContenedores']
+        worksheet.getCell('B106').value = productos[0].dataValues['ProduccionPzs']
+        worksheet.getCell('B107').value = productos[0].dataValues['InsumoUtilizado']
+        worksheet.getCell('B108').value = productos[0].dataValues['LoteProduccion']
+        worksheet.getCell('D108').value = productos[0].dataValues['Colabor']
+        worksheet.getCell('E108').value = productos[0].dataValues['Embolsador01']
+        worksheet.getCell('F108').value = productos[0].dataValues['Embolsador02']
+
+        worksheet.getCell('H105').value = productos[0].dataValues['MermaBolsas']
+        worksheet.getCell('H106').value = productos[0].dataValues['MermaPzs']
+        worksheet.getCell('H107').value = productos[0].dataValues['MermaInsumoUtilziado']
+
+        
+
+
+
+       await workbookMes.xlsx.writeFile(archivoMes);
+      
+      }
+
+
+    }
+
+    
+
+   // displayValuesMaquina1()
+    // maquina02
+    let displayValuesMaquina2 = async (worksheet) => {
+      let valuesTurno01 = await getValuesMaquina('Maquina 2',1, 'Maquina 1 y 2')
+      let valuesTurno02 = await getValuesMaquina('Maquina 2',2, 'Maquina 1 y 2')
+
+     
+     
+     
+      
+      // verificar si encontro data TURNO 1
+      console.log(valuesTurno01)
+      if(valuesTurno01.insumo.length > 0 && valuesTurno01.producto.length > 0) {
+        let insumos = valuesTurno01.insumo
+        let productos = valuesTurno01.producto
+        // si hay insumos siempre habra producto, por eso no se revisa por separado, 
+        // cada maquina tiene una cantidad de insumos, en la maquina 1 se usan 2, por eso accedemos a 2 resultados de estos
+
+        console.log(insumos[0].dataValues)
+        console.log(insumos[1].dataValues)
+        console.log(productos[0].dataValues)
+        //con los datos ya fetcheados los tenemos que poner en el archivo
+      //  if (fs.existsSync(filePath)) {
+      //   await workbook.xlsx.readFile(filePath);
+      // }
+     
+       // Buscar la hoja
+       //let worksheet = workbookMes.getWorksheet(nombreHojaDia);
+       //console.log(nombreHojaDia, filePath)
+        // colocar valores en hoja
+        // COLOCAL INSUMOS
+    
+        
+        worksheet.getCell('C18').value = productos[0].dataValues['HorometroInicial']
+        worksheet.getCell('F18').value = productos[0].dataValues['HorometroFinal']
+        worksheet.getCell('H18').value = (productos[0].dataValues['HorometroFinal'] - productos[0].dataValues['HorometroInicial'])
+        worksheet.getCell('B19').value = productos[0].dataValues['Presentacion']
+        worksheet.getCell('B20').value = productos[0].dataValues['ProduccionContenedores']
+        worksheet.getCell('B21').value = productos[0].dataValues['ProduccionPzs']
+        worksheet.getCell('B22').value = productos[0].dataValues['InsumoUtilizado']
+        worksheet.getCell('B23').value = productos[0].dataValues['LoteProduccion']
+        worksheet.getCell('D23').value = productos[0].dataValues['Colabor']
+        worksheet.getCell('E23').value = productos[0].dataValues['Embolsador01']
+        worksheet.getCell('F23').value = productos[0].dataValues['Embolsador02']
+
+        worksheet.getCell('H20').value = productos[0].dataValues['MermaBolsas']
+        worksheet.getCell('H21').value = productos[0].dataValues['MermaPzs']
+        worksheet.getCell('H22').value = productos[0].dataValues['MermaInsumoUtilziado']
+
+
+
+       await workbookMes.xlsx.writeFile(archivoMes);
+      
+      }
+
+
+      // VERIFICAR DATOS TURNO 2
+       if(valuesTurno02.insumo.length > 0 && valuesTurno02.producto.length > 0) {
+        let insumos = valuesTurno02.insumo
+        let productos = valuesTurno02.producto
+        // si hay insumos siempre habra producto, por eso no se revisa por separado, 
+        // cada maquina tiene una cantidad de insumos, en la maquina 1 se usan 2, por eso accedemos a 2 resultados de estos
+
+        //con los datos ya fetcheados los tenemos que poner en el archivo
+      //  if (fs.existsSync(filePath)) {
+      //   await workbook.xlsx.readFile(filePath);
+      // }
+     
+       // Buscar la hoja
+       //let worksheet = workbookMes.getWorksheet(nombreHojaDia);
+       //console.log(nombreHojaDia, filePath)
+        // colocar valores en hoja
+        // COLOCAL INSUMOS
+
+
+        
+        worksheet.getCell('C110').value = productos[0].dataValues['HorometroInicial']
+        worksheet.getCell('F110').value = productos[0].dataValues['HorometroFinal']
+        worksheet.getCell('H110').value = (productos[0].dataValues['HorometroFinal'] - productos[0].dataValues['HorometroInicial'])
+        worksheet.getCell('B111').value = productos[0].dataValues['Presentacion']
+        worksheet.getCell('B112').value = productos[0].dataValues['ProduccionContenedores']
+        worksheet.getCell('B113').value = productos[0].dataValues['ProduccionPzs']
+        worksheet.getCell('B114').value = productos[0].dataValues['InsumoUtilizado']
+        worksheet.getCell('B115').value = productos[0].dataValues['LoteProduccion']
+        worksheet.getCell('D115').value = productos[0].dataValues['Colabor']
+        worksheet.getCell('E115').value = productos[0].dataValues['Embolsador01']
+        worksheet.getCell('F115').value = productos[0].dataValues['Embolsador02']
+
+        worksheet.getCell('H112').value = productos[0].dataValues['MermaBolsas']
+        worksheet.getCell('H113').value = productos[0].dataValues['MermaPzs']
+        worksheet.getCell('H114').value = productos[0].dataValues['MermaInsumoUtilziado']
+
+
+
+        await workbookMes.xlsx.writeFile(archivoMes);
+      
+      }
+
+
+    }
+
+
+    //maquina 3
+    let displayValuesMaquina3 = async (worksheet) => {
+      let valuesTurno01 = await getValuesMaquina('Maquina 3',1, 'Maquina 3')
+      let valuesTurno02 = await getValuesMaquina('Maquina 3',2, 'Maquina 3')
+     
+     
+     
+    
+      // verificar si encontro data TURNO 1
+      console.log(valuesTurno01)
+      if(valuesTurno01.insumo.length > 0 && valuesTurno01.producto.length > 0) {
+        let insumos = valuesTurno01.insumo
+        let productos = valuesTurno01.producto
+        // si hay insumos siempre habra producto, por eso no se revisa por separado, 
+        // cada maquina tiene una cantidad de insumos, en la maquina 1 se usan 2, por eso accedemos a 2 resultados de estos
+
+        console.log(insumos[0].dataValues)
+        console.log(insumos[1].dataValues)
+        console.log(productos[0].dataValues)
+        //con los datos ya fetcheados los tenemos que poner en el archivo
+      //  if (fs.existsSync(filePath)) {
+      //   await workbook.xlsx.readFile(filePath);
+      // }
+     
+       // Buscar la hoja
+       //let worksheet = workbookMes.getWorksheet(nombreHojaDia);
+       //console.log(nombreHojaDia, filePath)
+        // colocar valores en hoja
+        // COLOCAL INSUMOS
+        worksheet.getCell('C26').value = insumos[0].dataValues['InsumoInicial']
+        worksheet.getCell('C27').value = insumos[0].dataValues['ContenedorInicial']
+        worksheet.getCell('D28').value = insumos[1].dataValues['InsumoInicial']
+        worksheet.getCell('E26').value = insumos[0].dataValues['SolicitudInsumoQty']
+        worksheet.getCell('E28').value = insumos[1].dataValues['SolicitudInsumoQty']
+
+        worksheet.getCell('G26').value = insumos[0].dataValues['InsumoFinal']
+        worksheet.getCell('G27').value = insumos[0].dataValues['ContenedorFinal']
+        worksheet.getCell('H28').value = insumos[1].dataValues['InsumoFinal']
+
+         worksheet.getCell('B30').value = insumos[1].dataValues['LoteInsumo']
+        worksheet.getCell('B29').value = insumos[0].dataValues['LoteInsumo']
+
+        
+        worksheet.getCell('C32').value = productos[0].dataValues['HorometroInicial']
+        worksheet.getCell('F32').value = productos[0].dataValues['HorometroFinal']
+        worksheet.getCell('H32').value = (productos[0].dataValues['HorometroFinal'] - productos[0].dataValues['HorometroInicial'])
+        worksheet.getCell('B33').value = productos[0].dataValues['Presentacion']
+        worksheet.getCell('B34').value = productos[0].dataValues['ProduccionContenedores']
+        worksheet.getCell('B35').value = productos[0].dataValues['ProduccionPzs']
+        worksheet.getCell('B36').value = productos[0].dataValues['InsumoUtilizado']
+        worksheet.getCell('B37').value = productos[0].dataValues['LoteProduccion']
+        worksheet.getCell('D37').value = productos[0].dataValues['Colabor']
+        worksheet.getCell('E37').value = productos[0].dataValues['Embolsador01']
+        worksheet.getCell('F37').value = productos[0].dataValues['Embolsador02']
+
+        worksheet.getCell('H34').value = productos[0].dataValues['MermaBolsas']
+        worksheet.getCell('H35').value = productos[0].dataValues['MermaPzs']
+        worksheet.getCell('H36').value = productos[0].dataValues['MermaInsumoUtilziado']
+
+
+
+       await workbookMes.xlsx.writeFile(archivoMes);
+      
+      }
+
+
+      // VERIFICAR DATOS TURNO 2
+       if(valuesTurno02.insumo.length > 0 && valuesTurno02.producto.length > 0) {
+        let insumos = valuesTurno02.insumo
+        let productos = valuesTurno02.producto
+        // si hay insumos siempre habra producto, por eso no se revisa por separado, 
+        // cada maquina tiene una cantidad de insumos, en la maquina 1 se usan 2, por eso accedemos a 2 resultados de estos
+
+        //con los datos ya fetcheados los tenemos que poner en el archivo
+      //  if (fs.existsSync(filePath)) {
+      //   await workbook.xlsx.readFile(filePath);
+      // }
+     
+       // Buscar la hoja
+       //let worksheet = workbookMes.getWorksheet(nombreHojaDia);
+       //console.log(nombreHojaDia, filePath)
+        // colocar valores en hoja
+        // COLOCAL INSUMOS
+        worksheet.getCell('C118').value = insumos[0].dataValues['InsumoInicial']
+        worksheet.getCell('C119').value = insumos[0].dataValues['ContenedorInicial']
+        worksheet.getCell('D120').value = insumos[1].dataValues['InsumoInicial']
+        worksheet.getCell('E118').value = insumos[0].dataValues['SolicitudInsumoQty']
+        worksheet.getCell('E120').value = insumos[1].dataValues['SolicitudInsumoQty']
+
+        worksheet.getCell('G118').value = insumos[0].dataValues['InsumoFinal']
+        worksheet.getCell('G119').value = insumos[0].dataValues['ContenedorFinal']
+        worksheet.getCell('H120').value = insumos[1].dataValues['InsumoFinal']
+
+        worksheet.getCell('B121').value = insumos[1].dataValues['LoteInsumo']
+        worksheet.getCell('B122').value = insumos[0].dataValues['LoteInsumo']
+
+        
+        worksheet.getCell('C124').value = productos[0].dataValues['HorometroInicial']
+        worksheet.getCell('F124').value = productos[0].dataValues['HorometroFinal']
+        worksheet.getCell('H124').value = (productos[0].dataValues['HorometroFinal'] - productos[0].dataValues['HorometroInicial'])
+        worksheet.getCell('B125').value = productos[0].dataValues['Presentacion']
+        worksheet.getCell('B126').value = productos[0].dataValues['ProduccionContenedores']
+        worksheet.getCell('B127').value = productos[0].dataValues['ProduccionPzs']
+        worksheet.getCell('B128').value = productos[0].dataValues['InsumoUtilizado']
+        worksheet.getCell('B129').value = productos[0].dataValues['LoteProduccion']
+        worksheet.getCell('D129').value = productos[0].dataValues['Colabor']
+        worksheet.getCell('E129').value = productos[0].dataValues['Embolsador01']
+        worksheet.getCell('F129').value = productos[0].dataValues['Embolsador02']
+
+        worksheet.getCell('H126').value = productos[0].dataValues['MermaBolsas']
+        worksheet.getCell('H127').value = productos[0].dataValues['MermaPzs']
+        worksheet.getCell('H128').value = productos[0].dataValues['MermaInsumoUtilziado']
+
+
+
+        await workbookMes.xlsx.writeFile(archivoMes);
+      
+      }
+
+
+    }
+
+    //Maquina rOCHELAU
+
+     let displayValuesMaquinaRochelau = async (worksheet) => {
+      let valuesTurno01 = await getValuesMaquina('Maquina Rochelau',1, 'Maquina Rochelau')
+      let valuesTurno02 = await getValuesMaquina('Maquina Rochelau',2, 'Maquina Rochelau')
+     
+     
+     
+          if(valuesTurno01.insumo.length > 0 && valuesTurno01.producto.length > 0) {
+        let insumos = valuesTurno01.insumo
+        let productos = valuesTurno01.producto
+        // si hay insumos siempre habra producto, por eso no se revisa por separado, 
+        // cada maquina tiene una cantidad de insumos, en la maquina 1 se usan 2, por eso accedemos a 2 resultados de estos
+
+        console.log(insumos[0].dataValues)
+        console.log(insumos[1].dataValues)
+        console.log(productos[0].dataValues)
+        //con los datos ya fetcheados los tenemos que poner en el archivo
+      //  if (fs.existsSync(filePath)) {
+      //   await workbook.xlsx.readFile(filePath);
+      // }
+     
+       // Buscar la hoja
+       //let worksheet = workbookMes.getWorksheet(nombreHojaDia);
+       //console.log(nombreHojaDia, filePath)
+        // colocar valores en hoja
+        // COLOCAL INSUMOS
+        worksheet.getCell('B68').value = insumos[0].dataValues['InsumoInicial']
+        worksheet.getCell('B69').value = insumos[2].dataValues['InsumoInicial']
+        worksheet.getCell('B70').value = insumos[1].dataValues['InsumoInicial']
+
+        worksheet.getCell('C68').value = insumos[0].dataValues['SolicitudInsumoQty']
+        worksheet.getCell('C69').value = insumos[2].dataValues['SolicitudInsumoQty']
+        worksheet.getCell('C70').value = insumos[1].dataValues['SolicitudInsumoQty']
+
+        worksheet.getCell('D68').value = insumos[0].dataValues['InsumoFinal']
+        worksheet.getCell('D69').value = insumos[2].dataValues['InsumoFinal']
+        worksheet.getCell('D70').value = insumos[1].dataValues['InsumoFinal']
+
+        worksheet.getCell('E68').value = insumos[0].dataValues['InsumoMermado']
+        worksheet.getCell('E69').value = insumos[2].dataValues['InsumoMermado']
+        worksheet.getCell('E70').value = insumos[1].dataValues['InsumoMermado']
+
+        worksheet.getCell('G68').value = insumos[0].dataValues['LoteInsumo']
+        worksheet.getCell('G69').value = insumos[2].dataValues['LoteInsumo']
+        worksheet.getCell('G70').value = insumos[1].dataValues['LoteInsumo']
+
+        
+        worksheet.getCell('A72').value = productos[0].dataValues['Presentacion'] 
+        worksheet.getCell('B72').value = productos[0].dataValues['ProduccionContenedores']
+        worksheet.getCell('C72').value = productos[0].dataValues['ProduccionPzs']   
+
+        worksheet.getCell('B73').value = insumos[0].dataValues['InsumoMarca']
+
+        worksheet.getCell('B74').value = productos[0].dataValues['LoteProduccion']
+
+        worksheet.getCell('B76').value = productos[0].dataValues['HorometroInicial']
+        worksheet.getCell('C76').value = productos[0].dataValues['HorometroFinal']
+        worksheet.getCell('D76').value = (productos[0].dataValues['HorometroFinal'] - productos[0].dataValues['HorometroInicial'])
+        
+
+
+
+       await workbookMes.xlsx.writeFile(archivoMes);
+      
+      }
+
+
+      // VERIFICAR DATOS TURNO 2
+       if(valuesTurno02.insumo.length > 0 && valuesTurno02.producto.length > 0) {
+        let insumos = valuesTurno02.insumo
+        let productos = valuesTurno02.producto
+        // si hay insumos siempre habra producto, por eso no se revisa por separado, 
+        // cada maquina tiene una cantidad de insumos, en la maquina 1 se usan 2, por eso accedemos a 2 resultados de estos
+
+        //con los datos ya fetcheados los tenemos que poner en el archivo
+      //  if (fs.existsSync(filePath)) {
+      //   await workbook.xlsx.readFile(filePath);
+      // }
+     
+       // Buscar la hoja
+       //let worksheet = workbookMes.getWorksheet(nombreHojaDia);
+       //console.log(nombreHojaDia, filePath)
+        // colocar valores en hoja
+        // COLOCAL INSUMOSworksheet.getCell('B68').value = insumos[0].dataValues['InsumoInicial']
+        
+        worksheet.getCell('B156').value = insumos[0].dataValues['InsumoInicial']
+        worksheet.getCell('B157').value = insumos[2].dataValues['InsumoInicial']
+        worksheet.getCell('B158').value = insumos[1].dataValues['InsumoInicial']
+
+        worksheet.getCell('C156').value = insumos[0].dataValues['SolicitudInsumoQty']
+        worksheet.getCell('C157').value = insumos[2].dataValues['SolicitudInsumoQty']
+        worksheet.getCell('C158').value = insumos[1].dataValues['SolicitudInsumoQty']
+
+        worksheet.getCell('D156').value = insumos[0].dataValues['InsumoFinal']
+        worksheet.getCell('D157').value = insumos[2].dataValues['InsumoFinal']
+        worksheet.getCell('D158').value = insumos[1].dataValues['InsumoFinal']
+
+        worksheet.getCell('E156').value = insumos[0].dataValues['InsumoMermado']
+        worksheet.getCell('E157').value = insumos[2].dataValues['InsumoMermado']
+        worksheet.getCell('E158').value = insumos[1].dataValues['InsumoMermado']
+
+        worksheet.getCell('G156').value = insumos[0].dataValues['LoteInsumo']
+        worksheet.getCell('G157').value = insumos[2].dataValues['LoteInsumo']
+        worksheet.getCell('G158').value = insumos[1].dataValues['LoteInsumo']
+
+        
+        worksheet.getCell('A160').value = productos[0].dataValues['Presentacion'] 
+        worksheet.getCell('B160').value = productos[0].dataValues['ProduccionContenedores']
+        worksheet.getCell('C160').value = productos[0].dataValues['ProduccionPzs']   
+
+        worksheet.getCell('B161').value = insumos[0].dataValues['InsumoMarca']
+
+        worksheet.getCell('B163').value = productos[0].dataValues['LoteProduccion']
+
+        worksheet.getCell('B166').value = productos[0].dataValues['HorometroInicial']
+        worksheet.getCell('C166').value = productos[0].dataValues['HorometroFinal']
+        worksheet.getCell('D166').value = (productos[0].dataValues['HorometroFinal'] - productos[0].dataValues['HorometroInicial'])
+        
+
+
+       await workbookMes.xlsx.writeFile(archivoMes);
+      
+      }
+
+    }
+
+    //Maquina Efecta
+     let displayValuesMaquinaEfecta = async (worksheet) => {
+      let valuesTurno01 = await getValuesMaquina('Maquina Efecta',1, 'Maquina Efecta')
+      let valuesTurno02 = await getValuesMaquina('Maquina Efecta',2, 'Maquina Efecta')
+     
+     
+     
+           if(valuesTurno01.insumo.length > 0 && valuesTurno01.producto.length > 0) {
+        let insumos = valuesTurno01.insumo
+        let productos = valuesTurno01.producto
+        // si hay insumos siempre habra producto, por eso no se revisa por separado, 
+        // cada maquina tiene una cantidad de insumos, en la maquina 1 se usan 2, por eso accedemos a 2 resultados de estos
+
+        console.log(insumos[0].dataValues)
+        console.log(insumos[1].dataValues)
+        console.log(productos[0].dataValues)
+        //con los datos ya fetcheados los tenemos que poner en el archivo
+      //  if (fs.existsSync(filePath)) {
+      //   await workbook.xlsx.readFile(filePath);
+      // }
+     
+       // Buscar la hoja
+       //let worksheet = workbookMes.getWorksheet(nombreHojaDia);
+       //console.log(nombreHojaDia, filePath)
+        // colocar valores en hoja
+        // COLOCAL INSUMOS
+        worksheet.getCell('C52').value = insumos[0].dataValues['InsumoInicial']
+        worksheet.getCell('C53').value = insumos[3].dataValues['InsumoInicial']
+        worksheet.getCell('C54').value = insumos[2].dataValues['InsumoInicial']
+
+        worksheet.getCell('D52').value = insumos[0].dataValues['SolicitudInsumoQty']
+        worksheet.getCell('D53').value = insumos[3].dataValues['SolicitudInsumoQty']
+        worksheet.getCell('D54').value = insumos[2].dataValues['SolicitudInsumoQty']
+
+        worksheet.getCell('E52').value = insumos[0].dataValues['InsumoFinal']
+        worksheet.getCell('E53').value = insumos[3].dataValues['InsumoFinal']
+        worksheet.getCell('E54').value = insumos[2].dataValues['InsumoFinal']
+
+        worksheet.getCell('F52').value = insumos[0].dataValues['InsumoMermado']
+        worksheet.getCell('F53').value = insumos[3].dataValues['InsumoMermado']
+        worksheet.getCell('F54').value = insumos[2].dataValues['InsumoMermado']
+
+        //insumo utilziado es por excel
+
+        worksheet.getCell('H52').value = insumos[0].dataValues['LoteInsumo']
+        worksheet.getCell('H53').value = insumos[3].dataValues['LoteInsumo']
+        worksheet.getCell('H54').value = insumos[2].dataValues['LoteInsumo']
+
+        
+        worksheet.getCell('A56').value = insumos[1].dataValues['LoteInsumo']
+        worksheet.getCell('B56').value = insumos[1].dataValues['Insumo'] 
+        worksheet.getCell('C56').value = insumos[1].dataValues['InsumoInicial'] 
+        worksheet.getCell('D56').value = insumos[1].dataValues['SolicitudInsumoQty'] 
+        worksheet.getCell('E56').value = insumos[1].dataValues['InsumoFinal'] 
+        worksheet.getCell('F56').value = insumos[1].dataValues['InsumoMermado'] 
+        
+        worksheet.getCell('A59').value = productos[0].dataValues['Presentacion'] 
+        worksheet.getCell('B62').value = productos[0].dataValues['ProduccionContenedores']
+        worksheet.getCell('B60').value = productos[0].dataValues['ProduccionPzs']   
+
+        worksheet.getCell('B63').value = productos[0].dataValues['LoteProduccion']
+
+        worksheet.getCell('B65').value = productos[0].dataValues['HorometroInicial']
+        worksheet.getCell('C65').value = productos[0].dataValues['HorometroFinal']
+        worksheet.getCell('D65').value = (productos[0].dataValues['HorometroFinal'] - productos[0].dataValues['HorometroInicial'])
+        
+
+
+
+        await workbookMes.xlsx.writeFile(archivoMes);
+      
+      }
+
+
+      // VERIFICAR DATOS TURNO 2
+       if(valuesTurno02.insumo.length > 0 && valuesTurno02.producto.length > 0) {
+        let insumos = valuesTurno02.insumo
+        let productos = valuesTurno02.producto
+        // si hay insumos siempre habra producto, por eso no se revisa por separado, 
+        // cada maquina tiene una cantidad de insumos, en la maquina 1 se usan 2, por eso accedemos a 2 resultados de estos
+
+        //con los datos ya fetcheados los tenemos que poner en el archivo
+      //  if (fs.existsSync(filePath)) {
+      //   await workbook.xlsx.readFile(filePath);
+      // }
+     
+       // Buscar la hoja
+       //let worksheet = workbookMes.getWorksheet(nombreHojaDia);
+       //console.log(nombreHojaDia, filePath)
+        // colocar valores en hoja
+        // COLOCAL INSUMOSworksheet.getCell('B68').value = insumos[0].dataValues['InsumoInicial']
+        
+        worksheet.getCell('C138').value = insumos[0].dataValues['InsumoInicial']
+        worksheet.getCell('C139').value = insumos[3].dataValues['InsumoInicial']
+        worksheet.getCell('C140').value = insumos[2].dataValues['InsumoInicial']
+
+        worksheet.getCell('D138').value = insumos[0].dataValues['SolicitudInsumoQty']
+        worksheet.getCell('D139').value = insumos[3].dataValues['SolicitudInsumoQty']
+        worksheet.getCell('D140').value = insumos[2].dataValues['SolicitudInsumoQty']
+
+        worksheet.getCell('E138').value = insumos[0].dataValues['InsumoFinal']
+        worksheet.getCell('E139').value = insumos[3].dataValues['InsumoFinal']
+        worksheet.getCell('E140').value = insumos[2].dataValues['InsumoFinal']
+
+        worksheet.getCell('F138').value = insumos[0].dataValues['InsumoMermado']
+        worksheet.getCell('F139').value = insumos[3].dataValues['InsumoMermado']
+        worksheet.getCell('F140').value = insumos[2].dataValues['InsumoMermado']
+
+        //insumo utilziado es por excel
+
+        worksheet.getCell('H138').value = insumos[0].dataValues['LoteInsumo']
+        worksheet.getCell('H139').value = insumos[3].dataValues['LoteInsumo']
+        worksheet.getCell('H140').value = insumos[2].dataValues['LoteInsumo']
+
+        
+        worksheet.getCell('A143').value = insumos[1].dataValues['LoteInsumo']
+        worksheet.getCell('B143').value = insumos[1].dataValues['Insumo'] 
+        worksheet.getCell('C143').value = insumos[1].dataValues['InsumoInicial'] 
+        worksheet.getCell('D143').value = insumos[1].dataValues['SolicitudInsumoQty'] 
+        worksheet.getCell('E143').value = insumos[1].dataValues['InsumoFinal'] 
+        worksheet.getCell('F143').value = insumos[1].dataValues['InsumoMermado'] 
+        
+        worksheet.getCell('A146').value = productos[0].dataValues['Presentacion'] 
+        worksheet.getCell('B149').value = productos[0].dataValues['ProduccionContenedores']
+        worksheet.getCell('B147').value = productos[0].dataValues['ProduccionPzs']   
+
+        worksheet.getCell('B151').value = productos[0].dataValues['LoteProduccion']
+
+        worksheet.getCell('B153').value = productos[0].dataValues['HorometroInicial']
+        worksheet.getCell('C153').value = productos[0].dataValues['HorometroFinal']
+        worksheet.getCell('D153').value = (productos[0].dataValues['HorometroFinal'] - productos[0].dataValues['HorometroInicial'])
+        
+
+
+       await workbookMes.xlsx.writeFile(archivoMes);
+      
+      }
+
+
+    }
+
+    //Maquina turnle de calor
+     let displayValuesMaquinaTunel = async (worksheet) => {
+      let valuesTurno01 = await getValuesMaquina('Maquina Tunel de Calor',1, 'Maquina Tunel de Calor')
+      let valuesTurno02 = await  getValuesMaquina('Maquina Tunel de Calor',2, 'Maquina Tunel de Calor')
+     
+     
+     
        
-      //etiqeuta
-      row.getCell(1).value = "Fecha"
-      row.getCell(2).value = "Maquina"
-      row.getCell(3).value = "Calaborador"
-      row.getCell(4).value = "Turno"
-      row.getCell(5).value = "Insumo"
-      row.getCell(6).value = "Lote Insumo"
-      row.getCell(7).value = "Insumo Inicial"
-      row.getCell(8).value = "Insumo Final"
-      row.getCell(9).value = "Contenedor"
-      row.getCell(10).value = "Contenedor Inicial"
-      row.getCell(11).value = "Contenedor Final"
-      row.getCell(12).value = "Solicitud de Insumo"
-      row.getCell(13).value = "Solicitud de Insumo - Cantidad"
-      row.getCell(14).value = "Solicitud de Insumo - Folio"
-      row.getCell(15).value = "Solicitud de Insumo - Folio Salida"
-      row.getCell(16).value = "Inventario Iniciar"
-      row.getCell(17).value = "Inventario Final"
-      row.getCell(18).value = "Insumo Utilizado"
-      row.getCell(19).value = "Insumo Mermado"
-      row.getCell(20).value = "Insumo Validado"
-      row.getCell(21).value = "Insumo Marca"
-      //bolsa
-      row.getCell(22).value = "Fecha"
-      row.getCell(23).value = "Maquina"
-      row.getCell(24).value = "Calaborador"
-      row.getCell(25).value = "Turno"
-      row.getCell(26).value = "Insumo"
-      row.getCell(27).value = "Lote Insumo"
-      row.getCell(28).value = "Insumo Inicial"
-      row.getCell(29).value = "Insumo Final"
-      row.getCell(30).value = "Contenedor"
-      row.getCell(31).value = "Contenedor Inicial"
-      row.getCell(32).value = "Contenedor Final"
-      row.getCell(33).value = "Solicitud de Insumo"
-      row.getCell(34).value = "Solicitud de Insumo - Cantidad"
-      row.getCell(35).value = "Solicitud de Insumo - Folio"
-      row.getCell(36).value = "Solicitud de Insumo - Folio Salida"
-      row.getCell(37).value = "Inventario Iniciar"
-      row.getCell(38).value = "Inventario Final"
-      row.getCell(39).value = "Insumo Utilizado"
-      row.getCell(40).value = "Insumo Mermado"
-      row.getCell(41).value = "Insumo Validado"
-      row.getCell(42).value = "Insumo Marca"
-      //produccion
-      row.getCell(43).value = "Presentacion"
-      row.getCell(44).value = "Produccion Pzs"
-      row.getCell(45).value = "Produccion Contenedores"
-      row.getCell(46).value = "Lote de Produccion"
-      row.getCell(47).value = "Folio Entrada"
-      row.getCell(48).value = "Horometro Inicial"
-      row.getCell(49).value = "Horometro Final"
+           if(valuesTurno01.insumo.length > 0 && valuesTurno01.producto.length > 0) {
+        let insumos = valuesTurno01.insumo
+        let productos = valuesTurno01.producto
+        // si hay insumos siempre habra producto, por eso no se revisa por separado, 
+        // cada maquina tiene una cantidad de insumos, en la maquina 1 se usan 2, por eso accedemos a 2 resultados de estos
 
+        console.log(insumos[0].dataValues)
+        console.log(insumos[1].dataValues)
+        console.log(productos[0].dataValues)
+        //con los datos ya fetcheados los tenemos que poner en el archivo
+      //  if (fs.existsSync(filePath)) {
+      //   await workbook.xlsx.readFile(filePath);
+      // }
+     
+       // Buscar la hoja
+       //let worksheet = workbookMes.getWorksheet(nombreHojaDia);
+       //console.log(nombreHojaDia, filePath)
+        // colocar valores en hoja
+        // COLOCAL INSUMOS
+        worksheet.getCell('B80').value = productos[0].dataValues['ProduccionContenedores']
+        worksheet.getCell('D80').value = productos[0].dataValues['MermaInsumoUtilizado']
 
-
-
-
-
-
-      //paros
-
-       worksheet = workbook.getWorksheet("PAROS")
-        row = worksheet.getRow(1)
-
-       row.getCell(1).value = "Fecha"
-       row.getCell(2).value = "Colaborador"
-       row.getCell(3).value = "Maquina"
-       row.getCell(4).value = "Tipo Paro"
-       row.getCell(5).value = "Paro"
-       row.getCell(6).value = "Inicio"
-       row.getCell(7).value = "Final"
-       row.getCell(8).value = "Diferencia"
-
-    }
-
-
-    //se agregan valores a hojas con secuencia //poletileno - bolsa - produccion (litro)
-    let addValuesLitro = async (workbook) => {
-
-      let polietileno =  await insumos.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Insumo = 'Polietileno AD' AND
-          Maquina = 'Maquina 3'
-
-        `),
-        attributes: 
-          ['Date','Maquina','Colabor', 'Turno', 'Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
-            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
-            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
-            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
-          ]
+        worksheet.getCell('G80').value =(productos[0].dataValues['ProduccionContenedores']) * 400  + Number(productos[0].dataValues['MermaInsumoUtilizado'])
+        worksheet.getCell('B83').value = productos[0].dataValues['HorometroInicial']
+        worksheet.getCell('C83').value = productos[0].dataValues['HorometroFinal']
+        worksheet.getCell('D83').value = (productos[0].dataValues['HorometroFinal'] - productos[0].dataValues['HorometroInicial'])
         
-      });
 
+
+
+        await workbookMes.xlsx.writeFile(archivoMes);
       
-      let bolsa =  await insumos.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Insumo = 'Bolsa' AND
-          Maquina = 'Maquina 3'
-
-        `),
-        attributes: 
-          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
-            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
-            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
-            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
-          ]
-        
-      });
-
-      let producto =  await producciones.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Maquina = 'Maquina 3'
-
-        `),
-         attributes: 
-          ['Presentacion', 'ProduccionPzs', 'ProduccionContenedores', 'LoteProduccion', 'FolioEntrada', 'HorometroInicial', 'HorometroFinal'
-          ]
-        
-      });
-
-
-
-
-      if(producto.length == 0)  {
-        console.log("jto")
-        return console.log("vacio")
       }
 
 
+      // VERIFICAR DATOS TURNO 2
+       if(valuesTurno02.insumo.length > 0 && valuesTurno02.producto.length > 0) {
+        let insumos = valuesTurno02.insumo
+        let productos = valuesTurno02.producto
+        // si hay insumos siempre habra producto, por eso no se revisa por separado, 
+        // cada maquina tiene una cantidad de insumos, en la maquina 1 se usan 2, por eso accedemos a 2 resultados de estos
 
-
-  let worksheetLitro = workbook.getWorksheet("LITRO")
-      //polietileno
-      // Obtener fila 1
-
-         let cantidadRows = producto.length
-
-         /*  let insumo01Cols = 21, insumo02Cols = 21, produccionCols = 7
-
-          for (let i = 0; i < cantidadRows; i++) {
-            for (let j = 0; j< insumo01Cols; j++) {
-              row.getCell(j + 1).value = polietileno[i]
-            }
-
-            for (let j = 0; j< insumo02Cols; j++) {
-              row.getCell(j + 1 + 21).value = bolsa[i]
-            }*/
-
-
+        //con los datos ya fetcheados los tenemos que poner en el archivo
+      //  if (fs.existsSync(filePath)) {
+      //   await workbook.xlsx.readFile(filePath);
+      // }
+     
+       // Buscar la hoja
+       //let worksheet = workbookMes.getWorksheet(nombreHojaDia);
+       //console.log(nombreHojaDia, filePath)
+        // colocar valores en hoja
+        // COLOCAL INSUMOSworksheet.getCell('B68').value = insumos[0].dataValues['InsumoInicial']
         
-    for (let i = 0; i < cantidadRows; i++) {
-       let row = worksheetLitro.getRow(1 + 1);
-                console.log(polietileno[i].Date)
-            row.getCell(1).value =  polietileno[i].Date
-            row.getCell(2).value =  polietileno[i].Maquina
-            row.getCell(3).value =  polietileno[i].Colabor
-            row.getCell(4).value =  polietileno[i].Turno
-            row.getCell(5).value =  polietileno[i].Insumo
-            row.getCell(6).value =  polietileno[i].LoteInsumo
-            row.getCell(7).value =  polietileno[i].InsumoInicial
-            row.getCell(8).value =  polietileno[i].InsumoFinal
-            row.getCell(9).value =  polietileno[i].Contenedor
-            row.getCell(10).value = polietileno[i].ContenedorInicial
-            row.getCell(11).value = polietileno[i].ContenedorFinal
-            row.getCell(12).value = polietileno[i].SolicitudInsumo
-            row.getCell(13).value = polietileno[i].SolicitudInsumoQty
-            row.getCell(14).value = polietileno[i].SolicitudInsumoFolio
-            row.getCell(15).value = polietileno[i].SolicitudInsumoFolioSalida
-            row.getCell(16).value = polietileno[i].InventarioInicial
-            row.getCell(17).value = polietileno[i].InventarioFinal
-            row.getCell(18).value = polietileno[i].InsumoUtilizado  
-            row.getCell(19).value = polietileno[i].InsumoMermado
-            row.getCell(20).value = polietileno[i].InsumoValidado
-            row.getCell(21).value = polietileno[i].InsumoMarca
-
-            row.getCell(22).value = bolsa[i].Date
-            row.getCell(23).value = bolsa[i].Maquina
-            row.getCell(24).value = bolsa[i].Colabor
-            row.getCell(25).value = bolsa[i].Turno
-            row.getCell(26).value = bolsa[i].Insumo
-            row.getCell(27).value = bolsa[i].LoteInsumo
-            row.getCell(28).value = bolsa[i].InsumoInicial
-            row.getCell(29).value = bolsa[i].InsumoFinal
-            row.getCell(30).value = bolsa[i].Contenedor
-            row.getCell(31).value = bolsa[i].ContenedorInicial
-            row.getCell(32).value = bolsa[i].ContenedorFinal
-            row.getCell(33).value = bolsa[i].SolicitudInsumo
-            row.getCell(34).value = bolsa[i].SolicitudInsumoQty
-            row.getCell(35).value = bolsa[i].SolicitudInsumoFolio
-            row.getCell(36).value = bolsa[i].SolicitudInsumoFolioSalida
-            row.getCell(37).value = bolsa[i].InventarioInicial
-            row.getCell(38).value = bolsa[i].InventarioFinal
-            row.getCell(39).value = bolsa[i].InsumoUtilizado  
-            row.getCell(40).value = bolsa[i].InsumoMermado
-            row.getCell(41).value = bolsa[i].InsumoValidado
-            row.getCell(42).value = bolsa[i].InsumoMarca
-
-
-            row.getCell(43).value = producto[i].Presentacion
-            row.getCell(44).value = producto[i].ProduccionPzs
-            row.getCell(45).value = producto[i].ProduccionContenedores
-            row.getCell(46).value = producto[i].LoteProduccion
-            row.getCell(47).value = producto[i].FolioEntrada
-            row.getCell(48).value = producto[i].HorometroInicial
-            row.getCell(49).value = producto[i].HorometroFinal
-              
-
-
-
-
-
-          }
+        worksheet.getCell('B170').value = productos[0].dataValues['ProduccionContenedores']
+        worksheet.getCell('B170').value = productos[0].dataValues['MermaInsumoUtilizado']
+        worksheet.getCell('G170').value =( productos[0].dataValues['ProduccionContenedores'] * 400 ) + productos[0].dataValues['MermaInsumoUtilizado']
+        worksheet.getCell('B173').value = productos[0].dataValues['HorometroInicial']
+        worksheet.getCell('C173').value = productos[0].dataValues['HorometroFinal']
+        worksheet.getCell('D173').value = (productos[0].dataValues['HorometroFinal'] - productos[0].dataValues['HorometroInicial'])
         
 
 
-
-    }
-
-    //se agregan valores a hojas con secuencia //poletileno - bolsa - produccion (medio galon)
-    let addValuesMedioGalon = async (workbook) => {
-
-      let polietileno =  await insumos.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Insumo = 'Polietileno AD' AND
-          Maquina = 'Maquina 1 y 2'
-
-        `),
-        attributes: 
-          ['Date','Maquina','Colabor', 'Turno', 'Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
-            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
-            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
-            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
-          ]
-        
-      });
-
+        await workbookMes.xlsx.writeFile(archivoMes);
       
-      let bolsa =  await insumos.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Insumo = 'Bolsa' AND
-          Maquina = 'Maquina 1 y 2'
-
-        `),
-        attributes: 
-          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
-            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
-            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
-            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
-          ]
-        
-      });
-
-      let producto =  await producciones.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Maquina = 'Maquina 1'
-
-        `),
-         attributes: 
-          ['Presentacion', 'ProduccionPzs', 'ProduccionContenedores', 'LoteProduccion', 'FolioEntrada', 'HorometroInicial', 'HorometroFinal'
-          ]
-        
-      });
-
-
-
-
-      if(producto.length == 0)  {
-        console.log("jto")
-        return console.log("vacio")
       }
 
-
-
-
-  let worksheetLitro = workbook.getWorksheet("MEDIO GALON")
-      //polietileno
-      // Obtener fila 1
-
-         let cantidadRows = producto.length
-
-         /*  let insumo01Cols = 21, insumo02Cols = 21, produccionCols = 7
-
-          for (let i = 0; i < cantidadRows; i++) {
-            for (let j = 0; j< insumo01Cols; j++) {
-              row.getCell(j + 1).value = polietileno[i]
-            }
-
-            for (let j = 0; j< insumo02Cols; j++) {
-              row.getCell(j + 1 + 21).value = bolsa[i]
-            }*/
-
-
-        
-    for (let i = 0; i < cantidadRows; i++) {
-      let row = worksheetLitro.getRow(i + 2);
-                console.log(polietileno[i].Date)
-            row.getCell(1).value =  polietileno[i].Date
-            row.getCell(2).value =  polietileno[i].Maquina
-            row.getCell(3).value =  polietileno[i].Colabor
-            row.getCell(4).value =  polietileno[i].Turno
-            row.getCell(5).value =  polietileno[i].Insumo
-            row.getCell(6).value =  polietileno[i].LoteInsumo
-            row.getCell(7).value =  polietileno[i].InsumoInicial
-            row.getCell(8).value =  polietileno[i].InsumoFinal
-            row.getCell(9).value =  polietileno[i].Contenedor
-            row.getCell(10).value = polietileno[i].ContenedorInicial
-            row.getCell(11).value = polietileno[i].ContenedorFinal
-            row.getCell(12).value = polietileno[i].SolicitudInsumo
-            row.getCell(13).value = polietileno[i].SolicitudInsumoQty
-            row.getCell(14).value = polietileno[i].SolicitudInsumoFolio
-            row.getCell(15).value = polietileno[i].SolicitudInsumoFolioSalida
-            row.getCell(16).value = polietileno[i].InventarioInicial
-            row.getCell(17).value = polietileno[i].InventarioFinal
-            row.getCell(18).value = polietileno[i].InsumoUtilizado  
-            row.getCell(19).value = polietileno[i].InsumoMermado
-            row.getCell(20).value = polietileno[i].InsumoValidado
-            row.getCell(21).value = polietileno[i].InsumoMarca
-
-            row.getCell(22).value = bolsa[i].Date
-            row.getCell(23).value = bolsa[i].Maquina
-            row.getCell(24).value = bolsa[i].Colabor
-            row.getCell(25).value = bolsa[i].Turno
-            row.getCell(26).value = bolsa[i].Insumo
-            row.getCell(27).value = bolsa[i].LoteInsumo
-            row.getCell(28).value = bolsa[i].InsumoInicial
-            row.getCell(29).value = bolsa[i].InsumoFinal
-            row.getCell(30).value = bolsa[i].Contenedor
-            row.getCell(31).value = bolsa[i].ContenedorInicial
-            row.getCell(32).value = bolsa[i].ContenedorFinal
-            row.getCell(33).value = bolsa[i].SolicitudInsumo
-            row.getCell(34).value = bolsa[i].SolicitudInsumoQty
-            row.getCell(35).value = bolsa[i].SolicitudInsumoFolio
-            row.getCell(36).value = bolsa[i].SolicitudInsumoFolioSalida
-            row.getCell(37).value = bolsa[i].InventarioInicial
-            row.getCell(38).value = bolsa[i].InventarioFinal
-            row.getCell(39).value = bolsa[i].InsumoUtilizado  
-            row.getCell(40).value = bolsa[i].InsumoMermado
-            row.getCell(41).value = bolsa[i].InsumoValidado
-            row.getCell(42).value = bolsa[i].InsumoMarca
-
-
-            row.getCell(43).value = producto[i].Presentacion
-            row.getCell(44).value = producto[i].ProduccionPzs
-            row.getCell(45).value = producto[i].ProduccionContenedores
-            row.getCell(46).value = producto[i].LoteProduccion
-            row.getCell(47).value = producto[i].FolioEntrada
-            row.getCell(48).value = producto[i].HorometroInicial
-            row.getCell(49).value = producto[i].HorometroFinal
-              
-
-
-
-
-
-          }
-        
-
-
-
     }
 
-    let addValuesGalon = async (workbook) => {
-
-      let polietileno =  await insumos.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Insumo = 'Polietileno AD' AND
-          Maquina = 'Maquina 1 y 2'
-
-        `),
-        attributes: 
-          ['Date','Maquina','Colabor', 'Turno', 'Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
-            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
-            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
-            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
-          ]
-        
-      });
+    let ws = workbookMes.getWorksheet(nombreHojaDia);
+    await displayValuesMaquina1(ws)
+    await displayValuesMaquina2(ws)
+    await displayValuesMaquina3(ws)
+    await displayValuesMaquinaRochelau(ws)
+    await displayValuesMaquinaEfecta(ws)
+    await displayValuesMaquinaTunel(ws)
 
       
-      let bolsa =  await insumos.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Insumo = 'Bolsa' AND
-          Maquina = 'Maquina 1 y 2'
 
-        `),
-        attributes: 
-          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
-            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
-            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
-            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
-          ]
-        
-      });
 
-      let producto =  await producciones.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Maquina = 'Maquina 2'
-
-        `),
-         attributes: 
-          ['Presentacion', 'ProduccionPzs', 'ProduccionContenedores', 'LoteProduccion', 'FolioEntrada', 'HorometroInicial', 'HorometroFinal'
-          ]
-        
-      });
-
-      if(producto.length == 0)  {
-        console.log("jto")
-        return console.log("vacio")
-      }
-
-
-
-
-
-
-
-  let worksheetLitro = workbook.getWorksheet("GALON")
-      //polietileno
-      // Obtener fila 1
-
-         let cantidadRows = producto.length
-
-         /*  let insumo01Cols = 21, insumo02Cols = 21, produccionCols = 7
-
-          for (let i = 0; i < cantidadRows; i++) {
-            for (let j = 0; j< insumo01Cols; j++) {
-              row.getCell(j + 1).value = polietileno[i]
-            }
-
-            for (let j = 0; j< insumo02Cols; j++) {
-              row.getCell(j + 1 + 21).value = bolsa[i]
-            }*/
-
-
-        
-    for (let i = 0; i < cantidadRows; i++) {
-      
-      let row = worksheetLitro.getRow(i + 2);
-                console.log(polietileno[i].Date)
-            row.getCell(1).value =  polietileno[i].Date
-            row.getCell(2).value =  polietileno[i].Maquina
-            row.getCell(3).value =  polietileno[i].Colabor
-            row.getCell(4).value =  polietileno[i].Turno
-            row.getCell(5).value =  polietileno[i].Insumo
-            row.getCell(6).value =  polietileno[i].LoteInsumo
-            row.getCell(7).value =  polietileno[i].InsumoInicial
-            row.getCell(8).value =  polietileno[i].InsumoFinal
-            row.getCell(9).value =  polietileno[i].Contenedor
-            row.getCell(10).value = polietileno[i].ContenedorInicial
-            row.getCell(11).value = polietileno[i].ContenedorFinal
-            row.getCell(12).value = polietileno[i].SolicitudInsumo
-            row.getCell(13).value = polietileno[i].SolicitudInsumoQty
-            row.getCell(14).value = polietileno[i].SolicitudInsumoFolio
-            row.getCell(15).value = polietileno[i].SolicitudInsumoFolioSalida
-            row.getCell(16).value = polietileno[i].InventarioInicial
-            row.getCell(17).value = polietileno[i].InventarioFinal
-            row.getCell(18).value = polietileno[i].InsumoUtilizado  
-            row.getCell(19).value = polietileno[i].InsumoMermado
-            row.getCell(20).value = polietileno[i].InsumoValidado
-            row.getCell(21).value = polietileno[i].InsumoMarca
-
-            row.getCell(22).value = bolsa[i].Date
-            row.getCell(23).value = bolsa[i].Maquina
-            row.getCell(24).value = bolsa[i].Colabor
-            row.getCell(25).value = bolsa[i].Turno
-            row.getCell(26).value = bolsa[i].Insumo
-            row.getCell(27).value = bolsa[i].LoteInsumo
-            row.getCell(28).value = bolsa[i].InsumoInicial
-            row.getCell(29).value = bolsa[i].InsumoFinal
-            row.getCell(30).value = bolsa[i].Contenedor
-            row.getCell(31).value = bolsa[i].ContenedorInicial
-            row.getCell(32).value = bolsa[i].ContenedorFinal
-            row.getCell(33).value = bolsa[i].SolicitudInsumo
-            row.getCell(34).value = bolsa[i].SolicitudInsumoQty
-            row.getCell(35).value = bolsa[i].SolicitudInsumoFolio
-            row.getCell(36).value = bolsa[i].SolicitudInsumoFolioSalida
-            row.getCell(37).value = bolsa[i].InventarioInicial
-            row.getCell(38).value = bolsa[i].InventarioFinal
-            row.getCell(39).value = bolsa[i].InsumoUtilizado  
-            row.getCell(40).value = bolsa[i].InsumoMermado
-            row.getCell(41).value = bolsa[i].InsumoValidado
-            row.getCell(42).value = bolsa[i].InsumoMarca
-
-
-            row.getCell(43).value = producto[i].Presentacion
-            row.getCell(44).value = producto[i].ProduccionPzs
-            row.getCell(45).value = producto[i].ProduccionContenedores
-            row.getCell(46).value = producto[i].LoteProduccion
-            row.getCell(47).value = producto[i].FolioEntrada
-            row.getCell(48).value = producto[i].HorometroInicial
-            row.getCell(49).value = producto[i].HorometroFinal
-              
-
-
-
-
-
-          }
-        
-
-
-
-    }
-
-    let addValuesMedioLitro = async (workbook) => {
-
-      let polietileno =  await insumos.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Insumo = 'Polietileno AD' AND
-          Maquina = 'Maquina Rochelau'
-
-        `),
-        attributes: 
-          ['Date','Maquina','Colabor', 'Turno', 'Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
-            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
-            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
-            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
-          ]
-        
-      });
-
-      
-      let bolsa =  await insumos.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Insumo = 'Bolsa' AND
-          Maquina = 'Maquina Rochelau'
-
-        `),
-        attributes: 
-          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
-            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
-            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
-            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
-          ]
-        
-      });
-
-
-      let pigmento =  await insumos.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Insumo = 'Pigmento Blanco' AND
-          Maquina = 'Maquina Rochelau'
-
-        `),
-        attributes: 
-          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
-            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
-            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
-            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
-          ]
-        
-      });
-
-      let producto =  await producciones.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Maquina = 'Maquina Rochelau'
-
-        `),
-         attributes: 
-          ['Presentacion', 'ProduccionPzs', 'ProduccionContenedores', 'LoteProduccion', 'FolioEntrada', 'HorometroInicial', 'HorometroFinal'
-          ]
-        
-      });
-
-
-      if(producto.length == 0)  {
-        console.log("jto")
-        return console.log("vacio")
-      }
-
-
-
-
-
-
-  let worksheetLitro = workbook.getWorksheet("MEDIO LITRO")
-      //polietileno
-      // Obtener fila 1
-
-         let cantidadRows = producto.length
-
-         /*  let insumo01Cols = 21, insumo02Cols = 21, produccionCols = 7
-
-          for (let i = 0; i < cantidadRows; i++) {
-            for (let j = 0; j< insumo01Cols; j++) {
-              row.getCell(j + 1).value = polietileno[i]
-            }
-
-            for (let j = 0; j< insumo02Cols; j++) {
-              row.getCell(j + 1 + 21).value = bolsa[i]
-            }*/
-
-
-        
-    for (let i = 0; i < cantidadRows; i++) {
-      
-      let row = worksheetLitro.getRow(i + 2);
-                console.log(polietileno[i].Date)
-            row.getCell(1).value =  polietileno[i].Date
-            row.getCell(2).value =  polietileno[i].Maquina
-            row.getCell(3).value =  polietileno[i].Colabor
-            row.getCell(4).value =  polietileno[i].Turno
-            row.getCell(5).value =  polietileno[i].Insumo
-            row.getCell(6).value =  polietileno[i].LoteInsumo
-            row.getCell(7).value =  polietileno[i].InsumoInicial
-            row.getCell(8).value =  polietileno[i].InsumoFinal
-            row.getCell(9).value =  polietileno[i].Contenedor
-            row.getCell(10).value = polietileno[i].ContenedorInicial
-            row.getCell(11).value = polietileno[i].ContenedorFinal
-            row.getCell(12).value = polietileno[i].SolicitudInsumo
-            row.getCell(13).value = polietileno[i].SolicitudInsumoQty
-            row.getCell(14).value = polietileno[i].SolicitudInsumoFolio
-            row.getCell(15).value = polietileno[i].SolicitudInsumoFolioSalida
-            row.getCell(16).value = polietileno[i].InventarioInicial
-            row.getCell(17).value = polietileno[i].InventarioFinal
-            row.getCell(18).value = polietileno[i].InsumoUtilizado  
-            row.getCell(19).value = polietileno[i].InsumoMermado
-            row.getCell(20).value = polietileno[i].InsumoValidado
-            row.getCell(21).value = polietileno[i].InsumoMarca
-
-            row.getCell(22).value = bolsa[i].Date
-            row.getCell(23).value = bolsa[i].Maquina
-            row.getCell(24).value = bolsa[i].Colabor
-            row.getCell(25).value = bolsa[i].Turno
-            row.getCell(26).value = bolsa[i].Insumo
-            row.getCell(27).value = bolsa[i].LoteInsumo
-            row.getCell(28).value = bolsa[i].InsumoInicial
-            row.getCell(29).value = bolsa[i].InsumoFinal
-            row.getCell(30).value = bolsa[i].Contenedor
-            row.getCell(31).value = bolsa[i].ContenedorInicial
-            row.getCell(32).value = bolsa[i].ContenedorFinal
-            row.getCell(33).value = bolsa[i].SolicitudInsumo
-            row.getCell(34).value = bolsa[i].SolicitudInsumoQty
-            row.getCell(35).value = bolsa[i].SolicitudInsumoFolio
-            row.getCell(36).value = bolsa[i].SolicitudInsumoFolioSalida
-            row.getCell(37).value = bolsa[i].InventarioInicial
-            row.getCell(38).value = bolsa[i].InventarioFinal
-            row.getCell(39).value = bolsa[i].InsumoUtilizado  
-            row.getCell(40).value = bolsa[i].InsumoMermado
-            row.getCell(41).value = bolsa[i].InsumoValidado
-            row.getCell(42).value = bolsa[i].InsumoMarca
-
-
-            row.getCell(43).value = pigmento[i].Date
-            row.getCell(44).value = pigmento[i].Maquina
-            row.getCell(45).value = pigmento[i].Colabor
-            row.getCell(46).value = pigmento[i].Turno
-            row.getCell(47).value = pigmento[i].Insumo
-            row.getCell(48).value = pigmento[i].LoteInsumo
-            row.getCell(49).value = pigmento[i].InsumoInicial
-            row.getCell(50).value = pigmento[i].InsumoFinal
-            row.getCell(51).value = pigmento[i].Contenedor
-            row.getCell(52).value = pigmento[i].ContenedorInicial
-            row.getCell(53).value = pigmento[i].ContenedorFinal
-            row.getCell(54).value = pigmento[i].SolicitudInsumo
-            row.getCell(55).value = pigmento[i].SolicitudInsumoQty
-            row.getCell(56).value = pigmento[i].SolicitudInsumoFolio
-            row.getCell(57).value = pigmento[i].SolicitudInsumoFolioSalida
-            row.getCell(58).value = pigmento[i].InventarioInicial
-            row.getCell(59).value = pigmento[i].InventarioFinal
-            row.getCell(60).value = pigmento[i].InsumoUtilizado  
-            row.getCell(61).value = pigmento[i].InsumoMermado
-            row.getCell(62).value = pigmento[i].InsumoValidado
-            row.getCell(63).value = pigmento[i].InsumoMarca
-
-
-            row.getCell(64).value = producto[i].Presentacion
-            row.getCell(65).value = producto[i].ProduccionPzs
-            row.getCell(66).value = producto[i].ProduccionContenedores
-            row.getCell(68).value = producto[i].LoteProduccion
-            row.getCell(69).value = producto[i].FolioEntrada
-            row.getCell(70).value = producto[i].HorometroInicial
-            row.getCell(71).value = producto[i].HorometroFinal
-              
-
-
-
-
-
-          }
-        
-
-
-
-    }
-
-    let addValuesTapas = async (workbook) => {
-
-      let polietileno =  await insumos.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Insumo = 'Polietileno BD' AND
-          Maquina = 'Maquina Efecta'
-
-        `),
-        attributes: 
-          ['Date','Maquina','Colabor', 'Turno', 'Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
-            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
-            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
-            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
-          ]
-        
-      });
-
-      
-      let bolsa =  await insumos.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Insumo = 'Bolsa' AND
-          Maquina = 'Maquina Efecta'
-
-        `),
-        attributes: 
-          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
-            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
-            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
-            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
-          ]
-        
-      });
-
-       let caja =  await insumos.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Insumo = 'Caja' AND
-          Maquina = 'Maquina Efecta'
-
-        `),
-        attributes: 
-          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
-            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
-            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
-            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
-          ]
-        
-      });
-
-
-      let pigmento =  await insumos.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Insumo = 'Pigmento' AND
-          Maquina = 'Maquina Efecta'
-
-        `),
-        attributes: 
-          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
-            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
-            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
-            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
-          ]
-        
-      });
-
-      let producto =  await producciones.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Maquina = 'Maquina Efecta'
-
-        `),
-         attributes: 
-          ['Presentacion', 'ProduccionPzs', 'ProduccionContenedores', 'LoteProduccion', 'FolioEntrada', 'HorometroInicial', 'HorometroFinal'
-          ]
-        
-      });
-
-      console.log(producto[0])
-      console.log(producto)
-
-
-      if(producto.length == 0)  {
-        console.log("jto")
-        return console.log("vacio")
-      }
-
-
-  let worksheetLitro = workbook.getWorksheet("TAPAS")
-      //polietileno
-      // Obtener fila 1
-
-         let cantidadRows = producto.length
-
-         /*  let insumo01Cols = 21, insumo02Cols = 21, produccionCols = 7
-
-          for (let i = 0; i < cantidadRows; i++) {
-            for (let j = 0; j< insumo01Cols; j++) {
-              row.getCell(j + 1).value = polietileno[i]
-            }
-
-            for (let j = 0; j< insumo02Cols; j++) {
-              row.getCell(j + 1 + 21).value = bolsa[i]
-            }*/
-
-
-        
-    for (let i = 0; i < cantidadRows; i++) {
-      
-      let row = worksheetLitro.getRow(i + 2);
-                console.log(polietileno[i].Date)
-            row.getCell(1).value =  polietileno[i].Date
-            row.getCell(2).value =  polietileno[i].Maquina
-            row.getCell(3).value =  polietileno[i].Colabor
-            row.getCell(4).value =  polietileno[i].Turno
-            row.getCell(5).value =  polietileno[i].Insumo
-            row.getCell(6).value =  polietileno[i].LoteInsumo
-            row.getCell(7).value =  polietileno[i].InsumoInicial
-            row.getCell(8).value =  polietileno[i].InsumoFinal
-            row.getCell(9).value =  polietileno[i].Contenedor
-            row.getCell(10).value = polietileno[i].ContenedorInicial
-            row.getCell(11).value = polietileno[i].ContenedorFinal
-            row.getCell(12).value = polietileno[i].SolicitudInsumo
-            row.getCell(13).value = polietileno[i].SolicitudInsumoQty
-            row.getCell(14).value = polietileno[i].SolicitudInsumoFolio
-            row.getCell(15).value = polietileno[i].SolicitudInsumoFolioSalida
-            row.getCell(16).value = polietileno[i].InventarioInicial
-            row.getCell(17).value = polietileno[i].InventarioFinal
-            row.getCell(18).value = polietileno[i].InsumoUtilizado  
-            row.getCell(19).value = polietileno[i].InsumoMermado
-            row.getCell(20).value = polietileno[i].InsumoValidado
-            row.getCell(21).value = polietileno[i].InsumoMarca
-
-            row.getCell(22).value = bolsa[i].Date
-            row.getCell(23).value = bolsa[i].Maquina
-            row.getCell(24).value = bolsa[i].Colabor
-            row.getCell(25).value = bolsa[i].Turno
-            row.getCell(26).value = bolsa[i].Insumo
-            row.getCell(27).value = bolsa[i].LoteInsumo
-            row.getCell(28).value = bolsa[i].InsumoInicial
-            row.getCell(29).value = bolsa[i].InsumoFinal
-            row.getCell(30).value = bolsa[i].Contenedor
-            row.getCell(31).value = bolsa[i].ContenedorInicial
-            row.getCell(32).value = bolsa[i].ContenedorFinal
-            row.getCell(33).value = bolsa[i].SolicitudInsumo
-            row.getCell(34).value = bolsa[i].SolicitudInsumoQty
-            row.getCell(35).value = bolsa[i].SolicitudInsumoFolio
-            row.getCell(36).value = bolsa[i].SolicitudInsumoFolioSalida
-            row.getCell(37).value = bolsa[i].InventarioInicial
-            row.getCell(38).value = bolsa[i].InventarioFinal
-            row.getCell(39).value = bolsa[i].InsumoUtilizado  
-            row.getCell(40).value = bolsa[i].InsumoMermado
-            row.getCell(41).value = bolsa[i].InsumoValidado
-            row.getCell(42).value = bolsa[i].InsumoMarca
-
-            row.getCell(43).value = caja[i].Date
-            row.getCell(44).value = caja[i].Maquina
-            row.getCell(45).value = caja[i].Colabor
-            row.getCell(46).value = caja[i].Turno
-            row.getCell(47).value = caja[i].Insumo
-            row.getCell(48).value = caja[i].LoteInsumo
-            row.getCell(49).value = caja[i].InsumoInicial
-            row.getCell(50).value = caja[i].InsumoFinal
-            row.getCell(51).value = caja[i].Contenedor
-            row.getCell(52).value = caja[i].ContenedorInicial
-            row.getCell(53).value = caja[i].ContenedorFinal
-            row.getCell(54).value = caja[i].SolicitudInsumo
-            row.getCell(55).value = caja[i].SolicitudInsumoQty
-            row.getCell(56).value = caja[i].SolicitudInsumoFolio
-            row.getCell(57).value = caja[i].SolicitudInsumoFolioSalida
-            row.getCell(58).value = caja[i].InventarioInicial
-            row.getCell(59).value = caja[i].InventarioFinal
-            row.getCell(60).value = caja[i].InsumoUtilizado  
-            row.getCell(61).value = caja[i].InsumoMermado
-            row.getCell(62).value = caja[i].InsumoValidado
-            row.getCell(63).value = caja[i].InsumoMarca
-
-
-
-            row.getCell(64).value = pigmento[i].Date
-            row.getCell(65).value = pigmento[i].Maquina
-            row.getCell(66).value = pigmento[i].Colabor
-            row.getCell(67).value = pigmento[i].Turno
-            row.getCell(68).value = pigmento[i].Insumo
-            row.getCell(69).value = pigmento[i].LoteInsumo
-            row.getCell(70).value = pigmento[i].InsumoInicial
-            row.getCell(71).value = pigmento[i].InsumoFinal
-            row.getCell(72).value = pigmento[i].Contenedor
-            row.getCell(73).value = pigmento[i].ContenedorInicial
-            row.getCell(74).value = pigmento[i].ContenedorFinal
-            row.getCell(75).value = pigmento[i].SolicitudInsumo
-            row.getCell(76).value = pigmento[i].SolicitudInsumoQty
-            row.getCell(77).value = pigmento[i].SolicitudInsumoFolio
-            row.getCell(78).value = pigmento[i].SolicitudInsumoFolioSalida
-            row.getCell(79).value = pigmento[i].InventarioInicial
-            row.getCell(80).value = pigmento[i].InventarioFinal
-            row.getCell(81).value = pigmento[i].InsumoUtilizado  
-            row.getCell(82).value = pigmento[i].InsumoMermado
-            row.getCell(83).value = pigmento[i].InsumoValidado
-            row.getCell(84).value = pigmento[i].InsumoMarca
-
-
-            row.getCell(85).value = producto[i].Presentacion
-            row.getCell(86).value = producto[i].ProduccionPzs
-            row.getCell(87).value = producto[i].ProduccionContenedores
-            row.getCell(88).value = producto[i].LoteProduccion
-            row.getCell(89).value = producto[i].FolioEntrada
-            row.getCell(90).value = producto[i].HorometroInicial
-            row.getCell(91).value = producto[i].HorometroFinal
-              
-
-
-
-
-
-          }
-        
-
-
-
-    }
-
-    let addValuesEtiquetas = async (workbook) => {
-
-      let etiqueta =  await insumos.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Insumo = 'Etiqueta' AND
-          Maquina = 'Maquina Tunel de Calor'
-
-        `),
-        attributes: 
-          ['Date','Maquina','Colabor', 'Turno', 'Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
-            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
-            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
-            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
-          ]
-        
-      });
-
-      
-      let bolsa =  await insumos.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Insumo = 'Bolsa' AND
-          Maquina = 'Maquina Tunel de Calor'
-
-        `),
-        attributes: 
-          ['Date','Maquina','Colabor', 'Turno','Insumo', 'LoteInsumo', 'InsumoInicial', 'InsumoFinal',
-            'Contenedor', 'ContenedorInicial', 'ContenedorFinal', 'SolicitudInsumo', 'SolicitudInsumoQty',
-            'SolicitudInsumoFolio', 'SolicitudInsumoFolioSalida', 'InventarioInicial', 'InventarioFinal', 'InsumoUtilizado',
-            'InsumoMermado', 'InsumoValidado', 'InsumoMarca'
-          ]
-        
-      });
-
-      let producto =  await producciones.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} AND
-          Maquina = 'Maquina Tunel de Calor'
-
-        `),
-         attributes: 
-          ['Presentacion', 'ProduccionPzs', 'ProduccionContenedores', 'LoteProduccion', 'FolioEntrada', 'HorometroInicial', 'HorometroFinal'
-          ]
-        
-      });
-
-
-
-
-      if(producto.length == 0)  {
-        console.log("jto")
-        return console.log("vacio 02")
-      }
-
-
-
-
-  let worksheetLitro = workbook.getWorksheet("ETIQUETAS")
-      //polietileno
-      // Obtener fila 1
-         
-
-         let cantidadRows = producto.length
-
-         /*  let insumo01Cols = 21, insumo02Cols = 21, produccionCols = 7
-
-          for (let i = 0; i < cantidadRows; i++) {
-            for (let j = 0; j< insumo01Cols; j++) {
-              row.getCell(j + 1).value = polietileno[i]
-            }
-
-            for (let j = 0; j< insumo02Cols; j++) {
-              row.getCell(j + 1 + 21).value = bolsa[i]
-            }*/
-
-
-        
-    for (let i = 0; i < cantidadRows; i++) {
-      
-      let row = worksheetLitro.getRow(i + 2);
-            row.getCell(1).value =  etiqueta[i].Date
-            row.getCell(2).value =  etiqueta[i].Maquina
-            row.getCell(3).value =  etiqueta[i].Colabor
-            row.getCell(4).value =  etiqueta[i].Turno
-            row.getCell(5).value =  etiqueta[i].Insumo
-            row.getCell(6).value =  etiqueta[i].LoteInsumo
-            row.getCell(7).value =  etiqueta[i].InsumoInicial
-            row.getCell(8).value =  etiqueta[i].InsumoFinal
-            row.getCell(9).value =  etiqueta[i].Contenedor
-            row.getCell(10).value = etiqueta[i].ContenedorInicial
-            row.getCell(11).value = etiqueta[i].ContenedorFinal
-            row.getCell(12).value = etiqueta[i].SolicitudInsumo
-            row.getCell(13).value = etiqueta[i].SolicitudInsumoQty
-            row.getCell(14).value = etiqueta[i].SolicitudInsumoFolio
-            row.getCell(15).value = etiqueta[i].SolicitudInsumoFolioSalida
-            row.getCell(16).value = etiqueta[i].InventarioInicial
-            row.getCell(17).value = etiqueta[i].InventarioFinal
-            row.getCell(18).value = etiqueta[i].InsumoUtilizado  
-            row.getCell(19).value = etiqueta[i].InsumoMermado
-            row.getCell(20).value = etiqueta[i].InsumoValidado
-            row.getCell(21).value = etiqueta[i].InsumoMarca
-
-            row.getCell(22).value = bolsa[i].Date
-            row.getCell(23).value = bolsa[i].Maquina
-            row.getCell(24).value = bolsa[i].Colabor
-            row.getCell(25).value = bolsa[i].Turno
-            row.getCell(26).value = bolsa[i].Insumo
-            row.getCell(27).value = bolsa[i].LoteInsumo
-            row.getCell(28).value = bolsa[i].InsumoInicial
-            row.getCell(29).value = bolsa[i].InsumoFinal
-            row.getCell(30).value = bolsa[i].Contenedor
-            row.getCell(31).value = bolsa[i].ContenedorInicial
-            row.getCell(32).value = bolsa[i].ContenedorFinal
-            row.getCell(33).value = bolsa[i].SolicitudInsumo
-            row.getCell(34).value = bolsa[i].SolicitudInsumoQty
-            row.getCell(35).value = bolsa[i].SolicitudInsumoFolio
-            row.getCell(36).value = bolsa[i].SolicitudInsumoFolioSalida
-            row.getCell(37).value = bolsa[i].InventarioInicial
-            row.getCell(38).value = bolsa[i].InventarioFinal
-            row.getCell(39).value = bolsa[i].InsumoUtilizado  
-            row.getCell(40).value = bolsa[i].InsumoMermado
-            row.getCell(41).value = bolsa[i].InsumoValidado
-            row.getCell(42).value = bolsa[i].InsumoMarca
-
-
-            row.getCell(43).value = producto[i].Presentacion
-            row.getCell(44).value = producto[i].ProduccionPzs
-            row.getCell(45).value = producto[i].ProduccionContenedores
-            row.getCell(46).value = producto[i].LoteProduccion
-            row.getCell(47).value = producto[i].FolioEntrada
-            row.getCell(48).value = producto[i].HorometroInicial
-            row.getCell(49).value = producto[i].HorometroFinal
-              
-
-
-
-
-
-          }
-        
-
-
-
-    }
-
-
-    let addValuesParos= async (workbook) => {
-
-
-      let producto =  await paros.findAll({
-        where: Sequelize.literal(`
-          MONTH(Date) = ${currentMonth} AND
-          YEAR(Date) = ${currentYear} 
-
-        `),
-         attributes: 
-          ['Date', 'Colabor', 'Maquina', 'TipoParo', 'Paro', 'HoraInicio', 'HoraFinal', 'DifMinutos']
-        
-      });
-
-
-
-
-      if(producto.length == 0)  {
-        console.log("jto")
-        return console.log("vacio 02")
-      }
-
-
-
-
-  let worksheetLitro = workbook.getWorksheet("Paros")
-      //polietileno
-      // Obtener fila 1
-         
-
-         let cantidadRows = producto.length
-
-
-
-        
-    for (let i = 0; i < cantidadRows; i++) {
-   
-
-      row.getCell(43).value = producto[i].Date
-      row.getCell(43).value = producto[i].Colabor
-      row.getCell(44).value = producto[i].Maquina
-      row.getCell(45).value = producto[i].TipoParo
-      row.getCell(46).value = producto[i].Paro
-      row.getCell(47).value = producto[i].HoraInicio
-      row.getCell(48).value = producto[i].HoraFinal
-      row.getCell(49).value = producto[i].DifMinutos
-              
-    }
-        
-
-
-
-    }
-
-
-
+   res.redirect(req.get('referer'));
+    
     
 
-    const filePath = 'reporteMensual.xlsx';
-
-    async function obtenerWorkbook(filePath) {
-      const workbook = new ExcelJS.Workbook()
-      
-
-        return { workbook };
-    }
-
-    const { workbook } = await obtenerWorkbook(filePath)
-
-      await addSheets(workbook)
-      await addTitles(workbook)
-      await addValuesLitro(workbook)
-      await addValuesMedioGalon(workbook)
-      await addValuesGalon(workbook)
-      await addValuesMedioLitro(workbook)
-      await addValuesTapas(workbook)
-      await addValuesEtiquetas(workbook)
-      await addValuesParos(workbook)
 
 
-    await workbook.xlsx.writeFile('Reporte Mensual.xlsx')
 
-
-  
-
-    
-    res.render('reporteMensual')
 }

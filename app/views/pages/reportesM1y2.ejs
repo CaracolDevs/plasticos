@@ -111,9 +111,15 @@
 
                 <span>Produccion Pzs</span>
                 <input required type="text"  maxlength="10" name="M01[pzs]"  id="M01[pzs]">
+                
+                <span>Merma Pzs</span>
+                <input required type="text"  maxlength="10" name="M01[mermaPzs]"  id="M01[mermaPzs]">
 
                 <span>Produccion Bolsas</span>
                 <input required type="text"  maxlength="10" name="M01[bolsas]"  id="M01[bolsas]">
+
+                <span>Merma Bolsas</span>
+                <input required type="text"  maxlength="10" name="M01[mermaBolsas]"  id="M01[mermaBolsas]">
 
                 <span>Folio Entrada</span>
                 <input required type="text"  maxlength="10" name="M01[folioEntrada]"  id="M01[folioEntrada]">
@@ -123,13 +129,33 @@
 
                 <span>Horometro Final</span>
                 <input required type="text"  maxlength="10" name="M01[HF]"  id="M01[HF]">
+                
+                <span>Insumo utilizado</span>
+                <input required type="text"  maxlength="10" name="M01[MPutilizada]"  id="M01[MPutilizada]">
+
+
+                 <span>Merma Insumo utilizado</span>
+                <input required type="text"  maxlength="10" name="M01[MPutilizadaMerma]"  id="M01[MPutilizadaMerma]">
+                
+                   <span>Embolsador 01</span><br>
+                    <select  required name="M01[embolsador01]"  id="M01[embolsador01]">
+                        <% for(var i = 0; i < content[0].length; i++) { %>
+                        <option value="<%= content[1][i] %>"><%= content[1][i] %></option>
+                    <% } %>
+                    </select>
+                    <br><br>
+
+                    <span>Embolsador 02</span><br>
+                    <select  required name="M01[embolsador02]"  id="M01[embolsador02]">
+                        <% for(var i = 0; i < content[0].length; i++) { %>
+                        <option value="<%= content[1][i] %>"><%= content[1][i] %></option>
+                    <% } %>
+                    </select>
+                    <br><br>
                 </div>
                 
-
-
-
-
-                <span class="titleCat02">Produccion Maquina 2</span><br><br>
+                <div>
+                    <span class="titleCat02">Produccion Maquina 2</span><br><br>
                 <div class="formCat01">
                 <span>Presentacion</span>
                 <select required name="M02[presentacion]"  id="M02[presentacion]">
@@ -144,9 +170,15 @@
 
                 <span>Produccion Pzs</span>
                 <input required type="text"  maxlength="10" name="M02[pzs]"  id="M02[pzs]">
+                
+                <span>Merma Pzs</span>
+                <input required type="text"  maxlength="10" name="M02[mermaPzs]"  id="M02[mermaPzs]">
 
                 <span>Produccion Bolsas</span>
                 <input required type="text"  maxlength="10" name="M02[bolsas]"  id="M02[bolsas]">
+
+                <span>Merma Bolsas</span>
+                <input required type="text"  maxlength="10" name="M02[mermaBolsas]"  id="M02[mermaBolsas]">
 
                 <span>Folio Entrada</span>
                 <input required type="text"  maxlength="10" name="M02[folioEntrada]"  id="M02[folioEntrada]">
@@ -156,14 +188,47 @@
 
                 <span>Horometro Final</span>
                 <input required type="text"  maxlength="10" name="M02[HF]"  id="M02[HF]">
+
+                <span>Insumo utilizado</span>
+                <input required type="text"  maxlength="10" name="M02[MPutilizada]"  id="M02[MPutilizada]">
+
+                
+                <span>Merma Insumo utilizado</span>
+                <input required type="text"  maxlength="10" name="M02[MPutilizadaMerma]"  id="M02[MPutilizadaMerma]">
+
+                 <span>Embolsador 01</span><br>
+                    <select  required name="M02[embolsador01]"  id="M02[embolsador01]">
+                        <% for(var i = 0; i < content[0].length; i++) { %>
+                        <option value="<%= content[1][i] %>"><%= content[1][i] %></option>
+                    <% } %>
+                    </select>
+                    <br><br>
+
+                    <span>Embolsador 02</span><br>
+                    <select  required name="M02[embolsador02]"  id="M02[embolsador02]">
+                        <% for(var i = 0; i < content[0].length; i++) { %>
+                        <option value="<%= content[1][i] %>"><%= content[1][i] %></option>
+                    <% } %>
+                    </select>
+                    <br><br>
                 </div>
                
+                </div>
+                 <input type="submit" value="Enviar">
+                 
+                </div>
+                
+
+
+
+
+                
 
                 
                 
 
 
-            <input type="submit" value="Enviar">
+           
         </form>
 
     </div>

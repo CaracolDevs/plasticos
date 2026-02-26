@@ -13,7 +13,7 @@
             <img class="logo" src="/images/logo.jpg" alt="Logo">
         </div>
         <ul class="headerList">
-            <li> <a href="/asist/visor"><p>Regresar</p></a></li>
+            <li> <a href="/asists/visor"><p>Regresar</p></a></li>
                 <li> <a href="/asists/report"><p>Reporte</p></a></li>
                 <li> <a href="/asists/visor"><p>Visor de asistencias</p></a></li>
             <li> <a href="/directory/logout"><p>Cerrar Sesion</p></a></li>
@@ -49,18 +49,21 @@
         // se crearan abrras dependiendo de los dias faltados y asistidos
             let ids = '<%= content[0] %>'.split(",");
             let names = '<%= content[1] %>'.split(",");
-            let asists = '<%= content[2] %>'.split(","); //checar como sacar varios arrays
+            let asists = '<%= content[2] %>'
             let reasons = '<%= content[3] %>'.split(",");
             let totalDays = '<%= content[4] %>'.split(",");
+            let falts =  '<%= content[5] %>'
 
             let bar01 = document.getElementById("bar01")
+            console.log(totalDays)
 
             bar01.style.width = "100%"
             bar01.style.backgroundColor = "red"
             bar01.style.height = "30px"
 
             let bar02 = document.getElementById("bar02")
-            let asistidos = asists.length
+            let asistidos = asists[0]
+            console.log(asists)
             let asistidosValue = (asistidos * 100) / totalDays 
             console.log(asistidosValue)
 
@@ -75,7 +78,7 @@
 
 
             let bar03 = document.getElementById("bar03")
-            let faltados = totalDays - asists.length
+            let faltados = falts[0]
             let faltadosValue = (100 * faltados )/ totalDays
             console.log(asistidosValue)
 

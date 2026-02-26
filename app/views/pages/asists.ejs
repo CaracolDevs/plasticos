@@ -28,7 +28,7 @@
         <% for(var i = 0; i < content[0].length; i++) { %>
             
             <li><span class="tag"><%= content[0][i] %> : <%= content[1][i] %> - <%= content[2][i] %> - <%= content[3][i] %> - <%= content[4][i] %> </span>
-            <form class="basic-form first" action="/asists/colabor/delete" enctype="x-www-form-urlencoded" method="POST" onSubmit="return confirm('Se agregara este valor, desea continuar?');">
+            <form class="basic-form first" action="/asists/colabor/delete" enctype="x-www-form-urlencoded" method="POST" onSubmit="return confirm('Se borrara este valor, desea continuar?');">
                     <input class="custom-btn btn-7" type="submit" value="Borrar">
                     <input class="basic-input" type="text" name="name" id="name" value="<%= content[0][i] %>">       
                 </form></li>

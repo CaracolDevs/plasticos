@@ -135,10 +135,16 @@
 
 
                 <span>Produccion Pzs</span>
-                <input required type="text"  maxlength="10" name="M03[pzs]" id="M03[pzs]">
+                <input required type="text"  maxlength="10" name="M03[pzs]"  id="M03[pzs]">
+                
+                <span>Merma Pzs</span>
+                <input required type="text"  maxlength="10" name="M03[mermaPzs]"  id="M03[mermaPzs]">
 
                 <span>Produccion Bolsas</span>
                 <input required type="text"  maxlength="10" name="M03[bolsas]"  id="M03[bolsas]">
+
+                <span>Merma Bolsas</span>
+                <input required type="text"  maxlength="10" name="M03[mermaBolsas]"  id="M03[mermaBolsas]">
 
                 <span>Folio Entrada</span>
                 <input required type="text"  maxlength="10" name="M03[folioEntrada]" id="M03[folioEntrada]">
@@ -151,6 +157,27 @@
                 <span>Horometro Final</span>
                 <input required type="text"  maxlength="10" name="M03[HF]" id="M03[HF]">
 
+                <span>Insumo utilizado</span>
+                <input required type="text"  maxlength="10" name="M03[MPutilizada]"  id="M03[MPutilizada]">
+
+                <span>Merma Insumo utilizado</span>
+                <input required type="text"  maxlength="10" name="M03[MPutilizadaMerma]"  id="M03[MPutilizadaMerma]">
+
+                <span>Embolsador 01</span><br>
+                    <select  required name="M03[embolsador01]"  id="M03[embolsador01]">
+                        <% for(var i = 0; i < content[0].length; i++) { %>
+                        <option value="<%= content[1][i] %>"><%= content[1][i] %></option>
+                    <% } %>
+                    </select>
+                    <br><br>
+
+                    <span>Embolsador 02</span><br>
+                    <select  required name="M03[embolsador02]"  id="M03[embolsador02]">
+                        <% for(var i = 0; i < content[0].length; i++) { %>
+                        <option value="<%= content[1][i] %>"><%= content[1][i] %></option>
+                    <% } %>
+                    </select>
+                    <br><br>
                 </div>
                 
 

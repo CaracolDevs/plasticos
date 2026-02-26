@@ -82,7 +82,10 @@ let result = await value.findAll({
     id = [],
     role = [],
     noE = [],
-    noI = []
+    noI = [],
+    asists= []
+
+   
 
 
     for(values of result) {
@@ -91,6 +94,14 @@ let result = await value.findAll({
         role.push(values.dataValues['Role'])
         noE.push(values.dataValues['NoEmpleado'])
         noI.push(values.dataValues['NoImss'])
+
+        if(values.dataValues['Asist'] == 1) {
+            asists.push(1) 
+
+            console.log("HOLA :" ,asists)
+        } else {
+        
+        }
     }
 
     content = [id,name,role,noE,noI]
@@ -115,6 +126,9 @@ console.log(asists)
 
 let addAsist = async (ids, names, asists, reasons, date) => {
     for(const index of ids.keys()) {
+        if( asists[index] == undefined) {
+            asists[index] = false
+        }
         console.log(ids[index], names[index], reasons[index], asists[index])
         let colabor = await valueAsists.create({ ColaborId: ids[index], Colabor: names[index], 
         Asist: asists[index], Reason: reasons[index], Date: date} );
@@ -225,7 +239,10 @@ exports.sendVisor = async (req,res) => {
     names = [],
     asists = [],
     reasons = [],
-    date
+    date,
+    
+        asistCount = 0,
+        faltCount = 0
 
     
 
@@ -253,10 +270,30 @@ exports.sendVisor = async (req,res) => {
             }
         
         }
+
         let colaborA = await valueAsists.findAll({
             attributes: ['Asist'],
-            where: filters
+            where: {
+                ColaborId: id,
+                Date: {
+                    [Op.between]: [req.body.dateStart, req.body.dateEnd], 
+                },
+                Asist: true
+            }
         })
+
+        let colaborF = await valueAsists.findAll({
+            attributes: ['Asist'],
+            where: {
+                ColaborId: id,
+                Date: {
+                    [Op.between]: [req.body.dateStart, req.body.dateEnd], 
+                },
+                Asist: false
+            }
+        })
+
+        console.log("AQUI MERO" ,colaborA)
 
         let colaborR = await valueAsists.findAll({
             attributes: ['Reason'],
@@ -264,8 +301,19 @@ exports.sendVisor = async (req,res) => {
         })
 
         for(values of colaborA) {
+            if(values.dataValues['Asist'] == true) {
+                
+            asistCount++
+            }
+            
+        }
 
-            bowlA.push(values.dataValues['Asist'])
+
+         for(values of colaborF) {
+            if(values.dataValues['Asist'] == false) {
+                console.log("faltocount", faltCount)
+            faltCount++
+            }
             
         }
 
@@ -280,10 +328,10 @@ exports.sendVisor = async (req,res) => {
     }
     
     console.log("ojoaldato")
-    console.log(ids,names, asists, reasons, dif)
+    console.log(ids,names, asistCount, reasons, dif, faltCount), 
 
 
-    content = [ids, names,asists, reasons, dif]
+    content = [ids, names,asistCount, reasons, dif, faltCount]
    
     res.render('asistsVisorResult', {content})
 }

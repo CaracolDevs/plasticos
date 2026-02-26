@@ -81,7 +81,32 @@ module.exports = (sequelize, DataTypes) => {
     HorometroFinal: {
         allowNull: false,
         type: DataTypes.DECIMAL(8,2)
+    },
+    InsumoUtilizado: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(10,2)
+    },
+    MermaInsumoUtilizado: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(10,2)
+    },
+     MermaPzs: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(6,0)
+    },
+     MermaBolsas: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(6,0)
+    },
+    Embolsador01: {
+        allowNull: false,
+        type: DataTypes.STRING
+    },
+    Embolsador02: {
+        allowNull: false,
+        type: DataTypes.STRING
     }
+
 
 
     
